@@ -62,16 +62,39 @@ fn generate_node(node: &Node, output: &mut String, indent: usize, ctx: &mut Code
 }
 
 fn generate_text(text: &TextNode, output: &mut String, indent: usize) {
-    if text.value.is_empty() {
+    let collapsed = collapse_html_whitespace(&text.value);
+    if collapsed.is_empty() {
         return;
     }
 
     let line = format!(
         "{}output += '{}';\n",
         spaces(indent),
-        escape_js_string(&text.value)
+        escape_js_string(&collapsed)
     );
     output.push_str(&line);
+}
+
+/// Collapses runs of whitespace (including newlines) into a single space.
+/// This matches how HTML renders whitespace and keeps the generated output
+/// free of indentation-only text nodes.
+fn collapse_html_whitespace(value: &str) -> String {
+    let mut result = String::with_capacity(value.len());
+    let mut in_whitespace = false;
+
+    for ch in value.chars() {
+        if ch.is_whitespace() {
+            in_whitespace = true;
+        } else {
+            if in_whitespace {
+                result.push(' ');
+                in_whitespace = false;
+            }
+            result.push(ch);
+        }
+    }
+
+    result
 }
 
 fn generate_if_block(
@@ -116,7 +139,7 @@ fn generate_for_block(
     let items_name = ctx.next_temp("items");
 
     output.push_str(&format!(
-        "{}const {} = {};\n",
+        "{}const {} = Array.from(({}) ?? []);\n",
         spaces(indent),
         items_name,
         for_block.iterable
@@ -168,7 +191,9 @@ fn generate_switch_block(
 
     output.push_str(&format!("{}switch ({}) {{\n", spaces(indent), switch_name));
 
-    for case in &switch_block.cases {
+    let last_case_index = switch_block.cases.len().saturating_sub(1);
+
+    for (index, case) in switch_block.cases.iter().enumerate() {
         output.push_str(&format!(
             "{}case {}:\n",
             spaces(indent + 2),
@@ -179,7 +204,10 @@ fn generate_switch_block(
             generate_node(child, output, indent + 4, ctx);
         }
 
-        output.push_str(&format!("{}break;\n", spaces(indent + 4)));
+        let is_last = index == last_case_index && switch_block.default.is_none();
+        if !is_last {
+            output.push_str(&format!("{}break;\n", spaces(indent + 4)));
+        }
     }
 
     if let Some(default_children) = &switch_block.default {
@@ -188,8 +216,6 @@ fn generate_switch_block(
         for child in default_children {
             generate_node(child, output, indent + 4, ctx);
         }
-
-        output.push_str(&format!("{}break;\n", spaces(indent + 4)));
     }
 
     output.push_str(&format!("{}}}\n", spaces(indent)));

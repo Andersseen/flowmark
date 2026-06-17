@@ -335,33 +335,26 @@ fn parse_for_header(
     header: &str,
     start: usize,
     cursor: &Cursor,
-) -> Result<(String, String, String), Vec<Diagnostic>> {
+) -> Result<(String, String, Option<String>), Vec<Diagnostic>> {
     let trimmed = header.trim();
 
-    let (for_part, track_part) = match trimmed.rfind(';') {
-        Some(index) => (&trimmed[..index], &trimmed[index + 1..]),
-        None => {
-            return Err(vec![Diagnostic::new(
-                "Missing 'track' expression in @for",
-                cursor.line(),
-                cursor.column(),
-                start,
-                cursor.position(),
-            )]);
+    let (for_part, track) = match trimmed.rfind(';') {
+        Some(index) => {
+            let track_part = trimmed[index + 1..].trim();
+            if !track_part.starts_with("track ") {
+                return Err(vec![Diagnostic::new(
+                    "Invalid @for syntax: expected 'track <expression>'",
+                    cursor.line(),
+                    cursor.column(),
+                    start,
+                    cursor.position(),
+                )]);
+            }
+            let track = track_part["track ".len()..].trim().to_owned();
+            (&trimmed[..index], Some(track))
         }
+        None => (trimmed, None),
     };
-
-    let track_trimmed = track_part.trim();
-    if !track_trimmed.starts_with("track ") {
-        return Err(vec![Diagnostic::new(
-            "Invalid @for syntax: expected 'track <expression>'",
-            cursor.line(),
-            cursor.column(),
-            start,
-            cursor.position(),
-        )]);
-    }
-    let track = track_trimmed["track ".len()..].trim().to_owned();
 
     let for_trimmed = for_part.trim();
     let of_index = match for_trimmed.find(" of ") {
@@ -554,7 +547,28 @@ fn skip_whitespace(cursor: &mut Cursor) {
     }
 }
 
-fn skip_insignificant_whitespace(_cursor: &mut Cursor) {
-    // Leading whitespace before a control-flow marker is not meaningful text.
-    // Text nodes still capture whitespace between elements and interpolations.
+fn skip_insignificant_whitespace(cursor: &mut Cursor) {
+    // Whitespace is considered insignificant when it is immediately followed by
+    // a control-flow keyword or a closing brace. In those cases we skip it so
+    // the generated output does not contain formatting-only text nodes.
+    let mut lookahead = cursor.clone();
+    skip_whitespace(&mut lookahead);
+
+    let rest = &lookahead.source()[lookahead.position()..];
+    let followed_by_control = [
+        IF_START,
+        ELSE_IF_START,
+        ELSE_START,
+        FOR_START,
+        EMPTY_START,
+        SWITCH_START,
+        CASE_START,
+        DEFAULT_START,
+    ]
+    .iter()
+    .any(|keyword| rest.starts_with(keyword));
+
+    if followed_by_control || rest.starts_with("}") {
+        *cursor = lookahead;
+    }
 }

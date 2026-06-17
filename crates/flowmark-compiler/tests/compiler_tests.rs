@@ -83,7 +83,16 @@ fn nested_if() {
 fn r#for() {
     let source = "@for (product of ctx.products; track product.id) { <p>{{ product.name }}</p> }";
     let output = compile_source(source);
-    assert!(output.contains("const __items0 = ctx.products;"));
+    assert!(output.contains("const __items0 = Array.from((ctx.products) ?? []);"));
+    assert!(output.contains("for (const product of __items0) {"));
+    assert!(output.contains("renderValue(product.name)"));
+}
+
+#[test]
+fn for_without_track() {
+    let source = "@for (product of ctx.products) { <p>{{ product.name }}</p> }";
+    let output = compile_source(source);
+    assert!(output.contains("const __items0 = Array.from((ctx.products) ?? []);"));
     assert!(output.contains("for (const product of __items0) {"));
     assert!(output.contains("renderValue(product.name)"));
 }
@@ -98,11 +107,19 @@ fn for_empty() {
 }
 
 #[test]
+fn for_with_set() {
+    let source = "@for (item of ctx.items) { <p>{{ item }}</p> }";
+    let output = compile_source(source);
+    assert!(output.contains("Array.from((ctx.items) ?? [])"));
+    assert!(output.contains("for (const item of __items0) {"));
+}
+
+#[test]
 fn nested_for() {
     let source = "@for (row of ctx.rows; track row.id) { @for (cell of row.cells; track cell.id) { <span>{{ cell.value }}</span> } }";
     let output = compile_source(source);
-    assert!(output.contains("const __items0 = ctx.rows;"));
-    assert!(output.contains("const __items1 = row.cells;"));
+    assert!(output.contains("const __items0 = Array.from((ctx.rows) ?? []);"));
+    assert!(output.contains("const __items1 = Array.from((row.cells) ?? []);"));
     assert_eq!(output.matches("for (const ").count(), 2);
 }
 
@@ -113,6 +130,7 @@ fn switch_default() {
     assert!(output.contains("const __switch0 = ctx.status;"));
     assert!(output.contains("switch (__switch"));
     assert!(output.contains("default:"));
+    assert!(!output.contains("break;"));
 }
 
 #[test]
@@ -121,7 +139,7 @@ fn multiple_switch_cases() {
     let output = compile_source(source);
     assert!(output.contains("case 'a':"));
     assert!(output.contains("case 'b':"));
-    assert_eq!(output.matches("break;").count(), 2);
+    assert_eq!(output.matches("break;").count(), 1);
 }
 
 #[test]
@@ -159,8 +177,14 @@ fn nested_control_flow_blocks() {
 }
 
 #[test]
-fn missing_track_expression() {
-    let errors = expect_error("@for (item of ctx.items) { <p></p> }");
+fn optional_track_expression() {
+    let output = compile_source("@for (item of ctx.items) { <p></p> }");
+    assert!(output.contains("Array.from((ctx.items) ?? [])"));
+}
+
+#[test]
+fn invalid_track_syntax() {
+    let errors = expect_error("@for (item of ctx.items; item.id) { <p></p> }");
     assert!(errors.iter().any(|m| m.contains("track")));
 }
 

@@ -49,7 +49,10 @@ It currently supports:
   - `@else { ... }`
 - Iteration blocks:
   - `@for (item of items; track item.id) { ... }`
-  - `@empty { ... }` (mandatory `track` expression)
+  - `@for (item of items) { ... }` (`track` is optional)
+  - `@empty { ... }`
+  - The iterable is normalized with `Array.from`, so arrays, `Set`, `Map`,
+    generators, and array-like objects all work.
 - Switch blocks:
   - `@switch (expr) { @case ('a') { ... } @default { ... } }`
 
@@ -160,6 +163,12 @@ Compile to a file:
 cargo run -p flowmark-cli -- compile examples/basic/for.flow --out for.js
 ```
 
+Use a custom runtime import path:
+
+```sh
+cargo run -p flowmark-cli -- compile examples/basic/for.flow --runtime '#flowmark/runtime'
+```
+
 Or use the root shortcut:
 
 ```sh
@@ -189,32 +198,23 @@ import { escapeHtml, renderValue } from '@flowmark/runtime';
 
 export function render(ctx) {
   let output = '';
-
-  output += '<main>';
-  output += '<h1>';
-  output += renderValue(ctx.title);
-  output += '</h1>';
-
-  const __items0 = ctx.products;
-
+  const __items0 = Array.from((ctx.products) ?? []);
   if (__items0.length === 0) {
-    output += '<p>No products found</p>';
+    output += ' <p>No products found</p>';
   } else {
     for (const product of __items0) {
-      output += '<article>';
+      output += ' <article>';
       output += renderValue(product.title);
       output += '</article>';
     }
   }
 
-  output += '</main>';
-
   return output;
 }
 ```
 
-The actual compiler preserves whitespace from the template; the output above is
-simplified for readability.
+The compiler collapses whitespace-only formatting into single spaces so the
+generated output stays compact while remaining valid HTML.
 
 ## Current Limitations
 

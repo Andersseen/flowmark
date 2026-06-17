@@ -51,7 +51,7 @@ pub struct IfBranch {
 pub struct ForBlockNode {
     pub item: String,
     pub iterable: String,
-    pub track: String,
+    pub track: Option<String>,
     pub children: Vec<Node>,
     pub empty: Option<Vec<Node>>,
     pub span: Span,

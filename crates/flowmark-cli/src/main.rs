@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use flowmark_compiler::{compile, CompileOptions};
+use flowmark_compiler::{compile, CompileOptions, DiagnosticSeverity};
 use std::{fs, path::Path, process};
 
 #[derive(Parser)]
@@ -20,6 +20,10 @@ enum Command {
         /// Output file path
         #[arg(long)]
         out: Option<String>,
+
+        /// Runtime module import path
+        #[arg(long, default_value = "@flowmark/runtime")]
+        runtime: String,
     },
 }
 
@@ -27,11 +31,15 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Compile { input, out } => compile_file(&input, out.as_deref()),
+        Command::Compile {
+            input,
+            out,
+            runtime,
+        } => compile_file(&input, out.as_deref(), &runtime),
     }
 }
 
-fn compile_file(input: &str, out: Option<&str>) {
+fn compile_file(input: &str, out: Option<&str>, runtime: &str) {
     let path = Path::new(input);
 
     if path.extension().and_then(|ext| ext.to_str()) != Some("flow") {
@@ -47,7 +55,7 @@ fn compile_file(input: &str, out: Option<&str>) {
         }
     };
 
-    let options = CompileOptions::new("@flowmark/runtime").with_filename(input);
+    let options = CompileOptions::new(runtime).with_filename(input);
 
     match compile(&source, options) {
         Ok(output) => {
@@ -62,9 +70,18 @@ fn compile_file(input: &str, out: Option<&str>) {
         }
         Err(diagnostics) => {
             for diagnostic in diagnostics {
+                let severity = match diagnostic.severity {
+                    DiagnosticSeverity::Error => "error",
+                    DiagnosticSeverity::Warning => "warning",
+                };
+                let code = diagnostic
+                    .code
+                    .as_ref()
+                    .map(|c| format!("[{}] ", c))
+                    .unwrap_or_default();
                 eprintln!(
-                    "{}:{}:{}: {}",
-                    input, diagnostic.line, diagnostic.column, diagnostic.message
+                    "{}:{}:{}: {}{}: {}",
+                    input, diagnostic.line, diagnostic.column, severity, code, diagnostic.message
                 );
             }
             process::exit(1);

@@ -5,6 +5,7 @@ pub mod diagnostics;
 pub mod parser;
 
 use diagnostics::Diagnostic;
+pub use diagnostics::DiagnosticSeverity;
 
 /// Options that control code generation.
 #[derive(Debug, Clone, PartialEq, Eq)]

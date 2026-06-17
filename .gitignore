@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+/target/
+**/dist/
+**/build/
+*.tsbuildinfo
+
+# Logs
+*.log
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Coverage / caches
+coverage/
+.turbo/
+.cache/

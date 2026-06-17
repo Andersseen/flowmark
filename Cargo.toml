@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "crates/flowmark",
+  "crates/cli",
+]
+resolver = "2"

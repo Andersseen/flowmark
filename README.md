@@ -1,92 +1,213 @@
 # Flowmark
 
-A small experimental compiler toolkit for standalone HTML-like templates with modern control-flow syntax.
+Flowmark is a small, standalone compiler for HTML-like templates with
+Angular-inspired control flow syntax. It is not a framework. It does not provide
+runtime components, signals, or hydration. It only transforms `.flow` template
+files into plain JavaScript render functions.
 
-The long-term idea is to compile templates such as `{{ expression }}`, `@if`, `@for`, and `@switch` into JavaScript render functions with safe HTML escaping by default. It is inspired by Angular's modern control flow syntax, but it is independent from Angular and does not depend on any UI framework.
+## What Flowmark Is
 
-## What This Is
-
-- A Rust template compiler crate.
-- A Rust CLI for compiling template files.
-- A tiny TypeScript runtime package for HTML escaping and render-value helpers.
+- A Rust template compiler crate (`flowmark-compiler`).
+- A Rust CLI (`flowmark`) for compiling template files.
+- A tiny TypeScript runtime package (`@flowmark/runtime`) for HTML escaping and
+  render-value helpers.
 - A monorepo foundation that is intentionally small and easy to extend.
 
-## What This Is Not
+## What Flowmark Is Not
 
 - Not a framework.
 - Not an Angular, React, Astro, or Hono integration.
 - Not a hydration runtime.
-- Not a directive, DI, signals, pipes, or event compiler.
+- Not a compiler for directives, dependency injection, signals, pipes,
+  components, events, or `@defer` blocks.
 
-## Current Scope
+## Why It Exists
 
-The compiler currently exposes:
+Modern control-flow syntax such as `@if`, `@for`, and `@switch` is productive for
+templates, but it is usually tied to a full framework. Flowmark explores whether
+that syntax can be compiled into plain JavaScript render functions that are
+independent from any UI framework or build tool.
+
+## Current Compiler Scope
+
+The compiler exposes a single public function:
 
 ```rust
-compile(source: &str) -> Result<CompileOutput, Vec<Diagnostic>>
+pub fn compile(
+    source: &str,
+    options: CompileOptions
+) -> Result<CompileOutput, Vec<Diagnostic>>;
 ```
 
-For now it parses into a placeholder template node and emits a minimal JavaScript render function. The files are split into `ast`, `parser`, `codegen`, and `diagnostics` modules so the real compiler can grow in place.
+It currently supports:
 
-The TypeScript runtime exports:
+- Plain text and HTML-like markup.
+- Escaped interpolation: `{{ ctx.title }}`.
+- Conditional blocks:
+  - `@if (condition) { ... }`
+  - `@else if (condition) { ... }`
+  - `@else { ... }`
+- Iteration blocks:
+  - `@for (item of items; track item.id) { ... }`
+  - `@empty { ... }` (mandatory `track` expression)
+- Switch blocks:
+  - `@switch (expr) { @case ('a') { ... } @default { ... } }`
 
-```ts
-escapeHtml(value: unknown): string
-renderValue(value: unknown): string
+Expressions are preserved as JavaScript source strings. The compiler does not
+type-check or evaluate them.
+
+## Repository Architecture
+
+```
+flowmark/
+├── Cargo.toml
+├── package.json
+├── pnpm-workspace.yaml
+├── crates/
+│   ├── flowmark-compiler/   # Rust compiler library
+│   └── flowmark-cli/        # Rust CLI binary
+├── packages/
+│   └── runtime/             # TypeScript runtime
+└── examples/
+    └── basic/               # Example .flow templates
 ```
 
-## Future Scope
+### Why Rust for the Compiler?
 
-- HTML-like template parsing.
-- `{{ expression }}` interpolation.
-- `@if`, `@else if`, and `@else`.
-- `@for` and `@empty`.
-- `@switch`, `@case`, and `@default`.
-- Safe HTML escaping by default.
-- JavaScript render-function output.
+Rust provides a fast, safe parser and code generator that can be embedded in
+build tools, CLIs, or other Rust programs without a JavaScript runtime.
 
-## Run The CLI
+### Why TypeScript for the Runtime?
 
-Build the Rust workspace:
+The runtime is a tiny set of helpers consumed by the generated JavaScript. Using
+TypeScript keeps the runtime small, typed, and tree-shakeable.
+
+## Install Dependencies
+
+This repository uses pnpm and Cargo. Make sure both are installed, then run:
 
 ```sh
-pnpm run build:rust
+pnpm install
 ```
 
-Compile the example template:
+Rust dependencies are fetched automatically by Cargo.
 
-```sh
-cargo run -p flowmark-cli -- examples/basic/products.view
-```
-
-## Build
-
-Build everything:
+## Build the Project
 
 ```sh
 pnpm run build
 ```
 
-Build Rust only:
+This builds the Rust workspace and the TypeScript runtime.
+
+Individual builds:
 
 ```sh
-pnpm run build:rust
+pnpm run build:rust     # cargo build --workspace
+pnpm run build:runtime  # pnpm --filter @flowmark/runtime build
 ```
 
-Build the TypeScript runtime only:
+## Run Tests
 
 ```sh
-pnpm run build:runtime
+pnpm run test
 ```
 
-Run Rust tests:
+Individual test suites:
 
 ```sh
-pnpm run test:rust
+pnpm run test:rust     # cargo test --workspace
+pnpm run test:runtime  # pnpm --filter @flowmark/runtime test
 ```
 
-Format Rust code:
+## Run the CLI
+
+Compile a `.flow` file to stdout:
 
 ```sh
-pnpm run format
+cargo run -p flowmark-cli -- compile examples/basic/for.flow
 ```
+
+Compile to a file:
+
+```sh
+cargo run -p flowmark-cli -- compile examples/basic/for.flow --out for.js
+```
+
+Or use the root shortcut:
+
+```sh
+pnpm run compile:example
+```
+
+## Example Flowmark Input
+
+`examples/basic/for.flow`:
+
+```flow
+<main>
+  <h1>{{ ctx.title }}</h1>
+
+  @for (product of ctx.products; track product.id) {
+    <article>{{ product.title }}</article>
+  } @empty {
+    <p>No products found</p>
+  }
+</main>
+```
+
+## Example Generated JavaScript
+
+```js
+import { escapeHtml, renderValue } from '@flowmark/runtime';
+
+export function render(ctx) {
+  let output = '';
+
+  output += '<main>';
+  output += '<h1>';
+  output += renderValue(ctx.title);
+  output += '</h1>';
+
+  const __items0 = ctx.products;
+
+  if (__items0.length === 0) {
+    output += '<p>No products found</p>';
+  } else {
+    for (const product of __items0) {
+      output += '<article>';
+      output += renderValue(product.title);
+      output += '</article>';
+    }
+  }
+
+  output += '</main>';
+
+  return output;
+}
+```
+
+The actual compiler preserves whitespace from the template; the output above is
+simplified for readability.
+
+## Current Limitations
+
+Flowmark is intentionally limited to control-flow compilation. It does not
+support, and there are no plans to add:
+
+- Components
+- Events
+- `@defer` blocks
+- Signals
+- Hydration
+- Vite integration
+- Hono integration
+- Astro integration
+- Angular compatibility or Angular dependencies
+- Expression type-checking
+- Pipes, directives, or dependency injection
+- JSX or TSX
+
+## License
+
+MIT

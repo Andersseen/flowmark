@@ -1,6 +1,11 @@
 [workspace]
 members = [
-  "crates/flowmark",
-  "crates/cli",
+  "crates/flowmark-compiler",
+  "crates/flowmark-cli",
 ]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"

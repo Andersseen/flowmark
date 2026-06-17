@@ -1,0 +1,13 @@
+@switch (ctx.status) {
+  @case ('loading') {
+    <p>Loading</p>
+  }
+
+  @case ('ready') {
+    <p>Ready</p>
+  }
+
+  @default {
+    <p>Unknown</p>
+  }
+}

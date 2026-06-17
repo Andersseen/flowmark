@@ -1,9 +1,9 @@
 [package]
-name = "flowmark"
+name = "flowmark-compiler"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
 [lib]
-name = "flowmark"
+name = "flowmark_compiler"
 path = "src/lib.rs"

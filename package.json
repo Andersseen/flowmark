@@ -8,8 +8,15 @@
     "build": "pnpm run build:rust && pnpm run build:runtime",
     "build:rust": "cargo build --workspace",
     "build:runtime": "pnpm --filter @flowmark/runtime build",
-    "test": "pnpm run test:rust",
+    "test": "pnpm run test:rust && pnpm run test:runtime",
     "test:rust": "cargo test --workspace",
-    "format": "cargo fmt --all"
+    "test:runtime": "pnpm --filter @flowmark/runtime test",
+    "format": "pnpm run format:rust && pnpm run format:ts",
+    "format:rust": "cargo fmt --all",
+    "format:ts": "prettier --write --no-error-on-unmatched-pattern \"packages/**/*.ts\" \"examples/**/*.ts\"",
+    "compile:example": "cargo run -p flowmark-cli -- compile examples/basic/for.flow"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0"
   }
 }

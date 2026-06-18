@@ -183,8 +183,22 @@ fn optional_track_expression() {
 }
 
 #[test]
+fn track_expression_is_accepted_but_not_emitted() {
+    let output =
+        compile_source("@for (item of ctx.items; track item.id) { <p>{{ item.name }}</p> }");
+    assert!(output.contains("for (const item of __items0) {"));
+    assert!(!output.contains("item.id"));
+}
+
+#[test]
 fn invalid_track_syntax() {
     let errors = expect_error("@for (item of ctx.items; item.id) { <p></p> }");
+    assert!(errors.iter().any(|m| m.contains("track")));
+}
+
+#[test]
+fn empty_track_syntax() {
+    let errors = expect_error("@for (item of ctx.items; track) { <p></p> }");
     assert!(errors.iter().any(|m| m.contains("track")));
 }
 
@@ -228,6 +242,34 @@ fn unexpected_case() {
 fn unexpected_default() {
     let errors = expect_error("<p>Text</p> @default { <p>Default</p> }");
     assert!(errors.iter().any(|m| m.contains("Unexpected '@default'")));
+}
+
+#[test]
+fn escaped_control_flow_markers_render_as_text() {
+    let output = compile_source(r"\@if \(ctx.visible) \{ literal \} and \{{ value \}\}");
+    assert!(output.contains("output += '@if"));
+    assert!(output.contains("{{ value }}"));
+}
+
+#[test]
+fn control_flow_keywords_require_boundaries() {
+    let output = compile_source("@foreach is text and @ifx is text");
+    assert!(output.contains("@foreach is text and @ifx is text"));
+}
+
+#[test]
+fn expressions_support_escaped_quotes_and_template_literals() {
+    let source =
+        r#"@if (ctx.label === "a \"quoted\" value" || ctx.label === `a ) literal`) { <p>OK</p> }"#;
+    let output = compile_source(source);
+    assert!(output.contains(r#"ctx.label === "a \"quoted\" value""#));
+    assert!(output.contains("ctx.label === `a ) literal`"));
+}
+
+#[test]
+fn interpolation_supports_closing_braces_inside_strings() {
+    let output = compile_source(r#"<p>{{ "}}" }}</p>"#);
+    assert!(output.contains(r#"renderValue("}}")"#));
 }
 
 #[test]

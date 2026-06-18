@@ -64,7 +64,7 @@ fn parse_nodes(cursor: &mut Cursor, terminators: &[&str]) -> Result<Vec<Node>, V
             continue;
         }
 
-        if cursor.starts_with(IF_START) {
+        if matches_keyword(cursor, IF_START) {
             match parse_if_block(cursor) {
                 Ok(node) => nodes.push(Node::IfBlock(node)),
                 Err(err) => diagnostics.extend(err),
@@ -72,7 +72,7 @@ fn parse_nodes(cursor: &mut Cursor, terminators: &[&str]) -> Result<Vec<Node>, V
             continue;
         }
 
-        if cursor.starts_with(FOR_START) {
+        if matches_keyword(cursor, FOR_START) {
             match parse_for_block(cursor) {
                 Ok(node) => nodes.push(Node::ForBlock(node)),
                 Err(err) => diagnostics.extend(err),
@@ -80,7 +80,7 @@ fn parse_nodes(cursor: &mut Cursor, terminators: &[&str]) -> Result<Vec<Node>, V
             continue;
         }
 
-        if cursor.starts_with(SWITCH_START) {
+        if matches_keyword(cursor, SWITCH_START) {
             match parse_switch_block(cursor) {
                 Ok(node) => nodes.push(Node::SwitchBlock(node)),
                 Err(err) => diagnostics.extend(err),
@@ -126,7 +126,7 @@ fn match_terminator<'a>(cursor: &Cursor, terminators: &[&'a str]) -> Option<&'a 
     terminators
         .iter()
         .copied()
-        .find(|terminator| cursor.starts_with(terminator))
+        .find(|terminator| matches_marker(cursor, terminator))
 }
 
 fn match_unexpected_keyword(cursor: &Cursor) -> Option<&'static str> {
@@ -140,7 +140,7 @@ fn match_unexpected_keyword(cursor: &Cursor) -> Option<&'static str> {
     keywords
         .iter()
         .copied()
-        .find(|keyword| cursor.starts_with(keyword))
+        .find(|keyword| matches_keyword(cursor, keyword))
 }
 
 fn parse_interpolation(cursor: &mut Cursor) -> Result<InterpolationNode, Vec<Diagnostic>> {
@@ -149,7 +149,11 @@ fn parse_interpolation(cursor: &mut Cursor) -> Result<InterpolationNode, Vec<Dia
 
     let expression_start = cursor.position();
     while !cursor.is_eof() && !cursor.starts_with("}}") {
-        cursor.advance();
+        if let Some(quote) = current_js_string_quote(cursor) {
+            skip_js_string(cursor, quote);
+        } else {
+            cursor.advance();
+        }
     }
 
     if cursor.is_eof() {
@@ -184,17 +188,13 @@ fn parse_text(cursor: &mut Cursor) -> Result<TextNode, Vec<Diagnostic>> {
             break;
         }
 
-        if cursor.starts_with("{{")
-            || cursor.starts_with("}")
-            || cursor.starts_with(IF_START)
-            || cursor.starts_with(FOR_START)
-            || cursor.starts_with(SWITCH_START)
-            || cursor.starts_with(ELSE_IF_START)
-            || cursor.starts_with(ELSE_START)
-            || cursor.starts_with(EMPTY_START)
-            || cursor.starts_with(CASE_START)
-            || cursor.starts_with(DEFAULT_START)
-        {
+        if is_escaped_syntax(cursor) {
+            cursor.advance(); // skip escape marker
+            value.push(cursor.advance().unwrap());
+            continue;
+        }
+
+        if starts_syntax(cursor) {
             break;
         }
 
@@ -383,6 +383,18 @@ fn parse_for_header(
         )]);
     }
 
+    if let Some(track) = &track {
+        if track.trim().is_empty() {
+            return Err(vec![Diagnostic::new(
+                "Invalid @for syntax: expected 'track <expression>'",
+                cursor.line(),
+                cursor.column(),
+                start,
+                cursor.position(),
+            )]);
+        }
+    }
+
     Ok((item, iterable, track))
 }
 
@@ -463,14 +475,8 @@ fn parse_parenthesized_expression(cursor: &mut Cursor) -> Result<String, Vec<Dia
     while !cursor.is_eof() && depth > 0 {
         let ch = cursor.current().unwrap();
 
-        if ch == '\'' || ch == '"' {
-            cursor.advance();
-            while let Some(inner) = cursor.current() {
-                cursor.advance();
-                if inner == ch {
-                    break;
-                }
-            }
+        if let Some(quote) = current_js_string_quote(cursor) {
+            skip_js_string(cursor, quote);
             continue;
         }
 
@@ -555,20 +561,77 @@ fn skip_insignificant_whitespace(cursor: &mut Cursor) {
     skip_whitespace(&mut lookahead);
 
     let rest = &lookahead.source()[lookahead.position()..];
-    let followed_by_control = [
-        IF_START,
-        ELSE_IF_START,
-        ELSE_START,
-        FOR_START,
-        EMPTY_START,
-        SWITCH_START,
-        CASE_START,
-        DEFAULT_START,
-    ]
-    .iter()
-    .any(|keyword| rest.starts_with(keyword));
+    let followed_by_control = matches_keyword(&lookahead, IF_START)
+        || matches_keyword(&lookahead, ELSE_IF_START)
+        || matches_keyword(&lookahead, ELSE_START)
+        || matches_keyword(&lookahead, FOR_START)
+        || matches_keyword(&lookahead, EMPTY_START)
+        || matches_keyword(&lookahead, SWITCH_START)
+        || matches_keyword(&lookahead, CASE_START)
+        || matches_keyword(&lookahead, DEFAULT_START);
 
     if followed_by_control || rest.starts_with("}") {
         *cursor = lookahead;
+    }
+}
+
+fn starts_syntax(cursor: &Cursor) -> bool {
+    cursor.starts_with("{{")
+        || cursor.starts_with("}")
+        || matches_keyword(cursor, IF_START)
+        || matches_keyword(cursor, FOR_START)
+        || matches_keyword(cursor, SWITCH_START)
+        || matches_keyword(cursor, ELSE_IF_START)
+        || matches_keyword(cursor, ELSE_START)
+        || matches_keyword(cursor, EMPTY_START)
+        || matches_keyword(cursor, CASE_START)
+        || matches_keyword(cursor, DEFAULT_START)
+}
+
+fn matches_marker(cursor: &Cursor, marker: &str) -> bool {
+    if marker == "}" {
+        cursor.starts_with(marker)
+    } else {
+        matches_keyword(cursor, marker)
+    }
+}
+
+fn matches_keyword(cursor: &Cursor, keyword: &str) -> bool {
+    if !cursor.starts_with(keyword) {
+        return false;
+    }
+
+    let next = cursor.source()[cursor.position() + keyword.len()..]
+        .chars()
+        .next();
+
+    !matches!(next, Some(ch) if ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
+}
+
+fn is_escaped_syntax(cursor: &Cursor) -> bool {
+    cursor.starts_with("\\") && matches!(cursor.peek(1), Some('@' | '{' | '}' | '\\'))
+}
+
+fn current_js_string_quote(cursor: &Cursor) -> Option<char> {
+    match cursor.current() {
+        Some('\'' | '"' | '`') => cursor.current(),
+        _ => None,
+    }
+}
+
+fn skip_js_string(cursor: &mut Cursor, quote: char) {
+    cursor.advance();
+
+    while let Some(ch) = cursor.current() {
+        cursor.advance();
+
+        if ch == '\\' {
+            cursor.advance();
+            continue;
+        }
+
+        if ch == quote {
+            break;
+        }
     }
 }

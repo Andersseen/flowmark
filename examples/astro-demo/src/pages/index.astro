@@ -3,146 +3,164 @@ import Layout from "../layouts/Layout.astro";
 import CodeBlock from "../components/CodeBlock.astro";
 import { render } from "../generated/index.js";
 import { demoContext } from "../data/context.js";
+import templateSource from "../templates/index.flow?raw";
 
 const html = render(demoContext);
 
-const templateSource = `<main>
-  <h1>{{ ctx.title }}</h1>
-  <p>{{ ctx.description }}</p>
-
-  @if (ctx.featured) {
-    <span class="tag">Featured</span>
-  } @else {
-    <span class="tag">Standard</span>
-  }
-
-  <h2>Products</h2>
-
-  @for (product of ctx.products; track product.id) {
-    <article>
-      <h3>{{ product.name }}</h3>
-      <p>{{ product.description }}</p>
-      @switch (product.status) {
-        @case ('available') {
-          <span class="tag available">In stock</span>
-        }
-        @case ('sale') {
-          <span class="tag sale">On sale</span>
-        }
-        @default {
-          <span class="tag unavailable">Unavailable</span>
-        }
-      }
-    </article>
-  } @empty {
-    <p class="empty">No products found.</p>
-  }
-</main>`;
----
-
-<Layout title="Flowmark Demo">
-  <main>
-    <section class="hero">
-      <span class="badge">Framework-agnostic template compiler</span>
-      <h1>Flowmark</h1>
-      <p>
-        Compiles HTML-like templates with Angular-inspired control flow into
-        plain JavaScript render functions. No runtime framework required.
-      </p>
-      <nav class="nav">
-        <a href="/empty">See @empty state</a>
-        <a href="https://github.com/andersseen/flowmark" target="_blank"
-          >View on GitHub</a
-        >
-      </nav>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title">What is happening here?</h2>
-      <p class="section-description">
-        On the left is the <code>.flow</code> template source. On the right is
-        the rendered HTML, produced by the generated JavaScript render function.
-      </p>
-
-      <div class="grid">
-        <CodeBlock title="src/templates/index.flow" language="flow">
-          {templateSource}
-        </CodeBlock>
-
-        <div class="card">
-          <h3>Rendered output</h3>
-          <div class="preview" set:html={html} />
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title">Generated JavaScript</h2>
-      <p class="section-description">
-        Flowmark generates a single ESM function that builds an HTML string. The
-        runtime only provides <code>escapeHtml</code> and
-        <code>renderValue</code> helpers.
-      </p>
-      <CodeBlock title="src/generated/index.js" language="javascript">
-        {`import { escapeHtml, renderValue } from '@flowmark/runtime';
+const generatedPreview = `import { escapeHtml, renderValue } from '@flowmark/runtime';
 
 export function render(ctx) {
   let output = '';
-  // ... interpolated values and control flow
-  const __items0 = ctx.products;
+  output += '<main><h1>';
+  output += renderValue(ctx.title);
+  output += '</h1>';
+
+  if (ctx.featured) {
+    output += '<span class="tag">Featured</span>';
+  } else {
+    output += '<span class="tag">Standard</span>';
+  }
+
+  const __items0 = Array.from((ctx.products) ?? []);
   if (__items0.length === 0) {
     output += '<p class="empty">No products found.</p>';
   } else {
     for (const product of __items0) {
-      // ... product rendering
       const __switch1 = product.status;
       switch (__switch1) {
         case 'available':
           output += '<span class="tag available">In stock</span>';
           break;
-        // ...
+        case 'sale':
+          output += '<span class="tag sale">On sale</span>';
+          break;
+        default:
+          output += '<span class="tag unavailable">Unavailable</span>';
       }
     }
   }
-  return output;
-}`}
-        </CodeBlock>
-    </section>
 
-    <section class="section">
-      <h2 class="section-title">Why Flowmark?</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Plain JavaScript output</h3>
-          <p>
-            No virtual DOM, no hydration, no framework lock-in. Just a function
-            that returns an HTML string.
-          </p>
-        </div>
-        <div class="card">
-          <h3>Control flow syntax</h3>
-          <p>
-            Write <code>@if</code>, <code>@for</code>, and <code>@switch</code>
-            blocks with a clear, expressive syntax inspired by Angular.
-          </p>
-        </div>
-        <div class="card">
-          <h3>Rust compiler</h3>
-          <p>
-            Parsing and code generation run in a fast Rust binary that emits
-            diagnostics instead of panicking on invalid templates.
-          </p>
+  return output;
+}`;
+---
+
+<Layout title="Flowmark Demo">
+  <header class="hero-panel">
+    <div
+      class="page-frame grid gap-8 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end"
+    >
+      <div class="max-w-3xl">
+        <and-badge variant="outline">Rust compiler + tiny JS runtime</and-badge>
+        <h1
+          class="mt-5 text-4xl font-black tracking-normal text-foreground sm:text-5xl"
+        >
+          Flowmark
+        </h1>
+        <p class="mt-4 max-w-2xl text-lg text-muted-foreground">
+          HTML-like templates with Angular-inspired control flow compiled into a
+          plain JavaScript render function.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <and-button href="/empty" variant="default"
+            >View empty state</and-button
+          >
+          <and-button
+            href="https://github.com/andersseen/flowmark"
+            target="_blank"
+            variant="outline"
+          >
+            GitHub
+          </and-button>
         </div>
       </div>
+
+      <and-card variant="elevated" padded class="block">
+        <div class="grid gap-4">
+          <div>
+            <p class="text-sm font-semibold text-muted-foreground">
+              Current scope
+            </p>
+            <p class="mt-1 text-2xl font-bold text-foreground">
+              @if, @for, @switch
+            </p>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-sm">
+            <div class="rounded-md border border-border p-3">
+              <p class="font-bold">Escaped</p>
+              <p class="text-muted-foreground">interpolation</p>
+            </div>
+            <div class="rounded-md border border-border p-3">
+              <p class="font-bold">Array.from</p>
+              <p class="text-muted-foreground">iterables</p>
+            </div>
+            <div class="rounded-md border border-border p-3">
+              <p class="font-bold">ESM</p>
+              <p class="text-muted-foreground">output</p>
+            </div>
+          </div>
+        </div>
+      </and-card>
+    </div>
+  </header>
+
+  <main class="page-frame py-10">
+    <section class="grid gap-6 lg:grid-cols-2">
+      <CodeBlock title="src/templates/index.flow" language="flow">
+        {templateSource}
+      </CodeBlock>
+
+      <and-card variant="outline" class="block h-full">
+        <and-card-header>
+          <div class="flex items-center justify-between gap-3">
+            <and-card-title>Rendered output</and-card-title>
+            <and-badge variant="secondary">HTML</and-badge>
+          </div>
+          <and-card-description>
+            Produced by the generated JavaScript render function.
+          </and-card-description>
+        </and-card-header>
+        <and-card-content>
+          <div class="preview-surface flow-preview" set:html={html} />
+        </and-card-content>
+      </and-card>
+    </section>
+
+    <section class="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <and-card variant="outline" padded class="block">
+        <div class="grid gap-5">
+          <div>
+            <and-badge variant="secondary">Compiler contract</and-badge>
+            <h2 class="mt-4 text-2xl font-bold text-foreground">
+              Small on purpose
+            </h2>
+            <p class="mt-3 text-muted-foreground">
+              Flowmark does not ship components, hydration, directives, or a
+              VDOM. It compiles trusted template source into a render function
+              and lets the host app decide how to use the HTML.
+            </p>
+          </div>
+          <div class="grid gap-3 text-sm">
+            <div class="rounded-md border border-border p-4">
+              <p class="font-semibold">Template source is trusted code</p>
+              <p class="mt-1 text-muted-foreground">
+                Expressions are emitted as JavaScript. Context values are
+                escaped when interpolated.
+              </p>
+            </div>
+            <div class="rounded-md border border-border p-4">
+              <p class="font-semibold">`track` is reserved syntax</p>
+              <p class="mt-1 text-muted-foreground">
+                It is parsed today, but string rendering has no DOM diffing step
+                where keys would matter.
+              </p>
+            </div>
+          </div>
+        </div>
+      </and-card>
+
+      <CodeBlock title="generated render function" language="js">
+        {generatedPreview}
+      </CodeBlock>
     </section>
   </main>
-
-  <footer class="footer">
-    <p>
-      Built with <a href="https://astro.build" target="_blank">Astro</a> +
-      Flowmark. Explore the
-      <a href="https://github.com/andersseen/flowmark" target="_blank">repository</a
-      >.
-    </p>
-  </footer>
 </Layout>

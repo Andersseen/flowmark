@@ -27,6 +27,8 @@ node_modules/
 
 # Coverage / caches
 coverage/
+**/test-results/
+**/playwright-report/
 .turbo/
 .cache/
 .astro/

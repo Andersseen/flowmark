@@ -7,58 +7,15 @@ export interface Props {
 const { title, language } = Astro.props;
 ---
 
-<div class="code-block">
-  <div class="code-header">
-    <span class="code-title">{title}</span>
-    <span class="code-language">{language}</span>
-  </div>
-  <pre><code><slot /></code></pre>
-</div>
-
-<style>
-  .code-block {
-    background: #0f172a;
-    border: 1px solid #1e293b;
-    border-radius: 12px;
-    overflow: hidden;
-    margin: 1.5rem 0;
-  }
-
-  .code-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    background: #1e293b;
-    border-bottom: 1px solid #334155;
-    font-size: 0.875rem;
-  }
-
-  .code-title {
-    font-weight: 600;
-    color: #e2e8f0;
-  }
-
-  .code-language {
-    color: #94a3b8;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-      "Liberation Mono", "Courier New", monospace;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  pre {
-    margin: 0;
-    padding: 1.25rem;
-    overflow-x: auto;
-  }
-
-  code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-      "Liberation Mono", "Courier New", monospace;
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: #e2e8f0;
-  }
-</style>
+<and-card variant="outline" class="block h-full overflow-hidden">
+  <and-card-header>
+    <div class="flex items-center justify-between gap-3">
+      <and-card-title>{title}</and-card-title>
+      <and-badge variant="secondary">{language}</and-badge>
+    </div>
+  </and-card-header>
+  <and-card-content>
+    <pre
+      class="max-h-[560px] overflow-auto rounded-md bg-primary p-4 text-[0.82rem] leading-6 text-primary-foreground"><code><slot /></code></pre>
+  </and-card-content>
+</and-card>

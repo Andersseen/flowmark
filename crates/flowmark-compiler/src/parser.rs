@@ -341,7 +341,7 @@ fn parse_for_header(
     let (for_part, track) = match trimmed.rfind(';') {
         Some(index) => {
             let track_part = trimmed[index + 1..].trim();
-            if !track_part.starts_with("track ") {
+            if !starts_with_track_keyword(track_part) {
                 return Err(vec![Diagnostic::new(
                     "Invalid @for syntax: expected 'track <expression>'",
                     cursor.line(),
@@ -350,14 +350,14 @@ fn parse_for_header(
                     cursor.position(),
                 )]);
             }
-            let track = track_part["track ".len()..].trim().to_owned();
+            let track = track_part["track".len()..].trim().to_owned();
             (&trimmed[..index], Some(track))
         }
         None => (trimmed, None),
     };
 
     let for_trimmed = for_part.trim();
-    let of_index = match for_trimmed.find(" of ") {
+    let of_index = match find_of_keyword(for_trimmed) {
         Some(index) => index,
         None => {
             return Err(vec![Diagnostic::new(
@@ -371,7 +371,7 @@ fn parse_for_header(
     };
 
     let item = for_trimmed[..of_index].trim().to_owned();
-    let iterable = for_trimmed[of_index + 3..].trim().to_owned();
+    let iterable = for_trimmed[of_index + "of".len()..].trim().to_owned();
 
     if item.is_empty() || iterable.is_empty() {
         return Err(vec![Diagnostic::new(
@@ -396,6 +396,32 @@ fn parse_for_header(
     }
 
     Ok((item, iterable, track))
+}
+
+fn starts_with_track_keyword(value: &str) -> bool {
+    let Some(rest) = value.strip_prefix("track") else {
+        return false;
+    };
+
+    rest.chars().next().is_some_and(char::is_whitespace)
+}
+
+fn find_of_keyword(value: &str) -> Option<usize> {
+    value.char_indices().find_map(|(index, _)| {
+        if !value[index..].starts_with("of") {
+            return None;
+        }
+
+        let previous = value[..index].chars().next_back();
+        let next = value[index + "of".len()..].chars().next();
+
+        match (previous, next) {
+            (Some(before), Some(after)) if before.is_whitespace() && after.is_whitespace() => {
+                Some(index)
+            }
+            _ => None,
+        }
+    })
 }
 
 fn parse_switch_block(cursor: &mut Cursor) -> Result<SwitchBlockNode, Vec<Diagnostic>> {

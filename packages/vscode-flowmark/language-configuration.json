@@ -25,7 +25,7 @@
   ],
   "folding": {
     "markers": {
-      "start": "^\\s*@(if|for|switch)\\b.*\\{\\s*$",
+      "start": "^\\s*@(if|for|switch|case|default)\\b.*\\{\\s*$",
       "end": "^\\s*}\\s*(@empty\\s*\\{)?\\s*$"
     }
   }

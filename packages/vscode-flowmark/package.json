@@ -6,6 +6,18 @@
   "private": true,
   "publisher": "andersseen",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andersseen/flowmark.git",
+    "directory": "packages/vscode-flowmark"
+  },
+  "scripts": {
+    "package": "mkdir -p dist && vsce package --no-dependencies --out dist/flowmark-language-support.vsix",
+    "package:pre-release": "mkdir -p dist && vsce package --no-dependencies --pre-release --out dist/flowmark-language-support.vsix"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.2"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },

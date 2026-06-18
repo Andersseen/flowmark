@@ -9,28 +9,19 @@ export interface Props {
 const { mode = "main" } = Astro.props;
 
 const context = {
+  ...demoContext,
   mode,
   badge:
     mode === "empty"
       ? "Inline Flowmark empty state"
       : "Inline Flowmark in Astro",
-  title: mode === "empty" ? "Empty State" : "Flowmark",
+  title: mode === "empty" ? "Empty State" : demoContext.title,
   description:
     mode === "empty"
       ? "The same inline Flowmark template renders the fallback branch when ctx.products is empty."
-      : "HTML-like templates with Angular-inspired control flow compiled inside an Astro component.",
+      : demoContext.description,
   featured: mode !== "empty",
   products: mode === "empty" ? [] : demoContext.products,
-  notes: [
-    {
-      title: "Template source is trusted code",
-      body: "Expressions are emitted as JavaScript. Context values are escaped when interpolated.",
-    },
-    {
-      title: "`track` is reserved syntax",
-      body: "It is parsed today, but string rendering has no DOM diffing step where keys would matter.",
-    },
-  ],
 };
 ---
 
@@ -84,12 +75,31 @@ const context = {
   </header>
 
   <main class="page-frame py-10">
-    <section class="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+    <section class="grid gap-6 lg:grid-cols-4 md:grid-cols-2">
+      <and-card variant="outline" padded class="block">
+        <p class="text-sm font-semibold text-muted-foreground">Total products</p>
+        <p class="mt-1 text-3xl font-bold text-foreground">{{ ctx.products.length }}</p>
+      </and-card>
+      <and-card variant="outline" padded class="block">
+        <p class="text-sm font-semibold text-muted-foreground">In stock</p>
+        <p class="mt-1 text-3xl font-bold text-foreground">{{ ctx.products.filter(p => p.status === 'available').length }}</p>
+      </and-card>
+      <and-card variant="outline" padded class="block">
+        <p class="text-sm font-semibold text-muted-foreground">On sale</p>
+        <p class="mt-1 text-3xl font-bold text-foreground">{{ ctx.products.filter(p => p.status === 'sale').length }}</p>
+      </and-card>
+      <and-card variant="outline" padded class="block">
+        <p class="text-sm font-semibold text-muted-foreground">Out of stock</p>
+        <p class="mt-1 text-3xl font-bold text-foreground">{{ ctx.products.filter(p => p.status === 'unavailable').length }}</p>
+      </and-card>
+    </section>
+
+    <section class="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
       <and-card variant="outline" padded class="block">
         <div class="grid gap-5">
           <div>
-            <and-badge variant="secondary">Flowmark block</and-badge>
-            <h2 class="mt-4 text-2xl font-bold text-foreground">Written directly in Astro</h2>
+            <and-badge variant="secondary">How it works</and-badge>
+            <h2 class="mt-4 text-2xl font-bold text-foreground">Flowmark inside Astro</h2>
             <p class="mt-3 text-muted-foreground">
               This page uses a real Flowmark template inside a .astro component.
               Astro passes the raw slot to Flowmark, and Flowmark renders it on the server.
@@ -109,47 +119,58 @@ const context = {
       <and-card variant="outline" class="block h-full">
         <and-card-header>
           <div class="flex items-center justify-between gap-3">
-            <and-card-title>Rendered products</and-card-title>
+            <and-card-title>Product inventory</and-card-title>
             <and-badge variant="secondary">Flowmark</and-badge>
           </div>
           <and-card-description>
-            The list below is rendered by \@for, \@empty, and \@switch.
+            The table below is rendered by \@for, \@empty, and \@switch.
           </and-card-description>
         </and-card-header>
         <and-card-content>
           <div class="preview-surface flow-preview">
-            <main>
-              <h1>{{ ctx.title }}</h1>
-              <p>{{ ctx.description }}</p>
-
-              @if (ctx.featured) {
-                <span class="tag">Featured</span>
-              } @else {
-                <span class="tag">Standard</span>
-              }
-
-              <h2>Products</h2>
-
-              @for (product of ctx.products; track product.id) {
-                <article>
-                  <h3>{{ product.name }}</h3>
-                  <p>{{ product.description }}</p>
-                  @switch (product.status) {
-                    @case ('available') {
-                      <span class="tag available">In stock</span>
-                    }
-                    @case ('sale') {
-                      <span class="tag sale">On sale</span>
-                    }
-                    @default {
-                      <span class="tag unavailable">Unavailable</span>
-                    }
-                  }
-                </article>
-              } @empty {
-                <p class="empty">No products found.</p>
-              }
-            </main>
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-border">
+                  <th class="py-2 pr-4 font-semibold">Product</th>
+                  <th class="py-2 pr-4 font-semibold">Category</th>
+                  <th class="py-2 pr-4 font-semibold">Price</th>
+                  <th class="py-2 pr-4 font-semibold">Stock</th>
+                  <th class="py-2 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (product of ctx.products; track product.id) {
+                  <tr class="border-b border-border last:border-b-0">
+                    <td class="py-3 pr-4">
+                      <p class="font-semibold">{{ product.name }}</p>
+                      <p class="text-muted-foreground">{{ product.description }}</p>
+                    </td>
+                    <td class="py-3 pr-4 text-muted-foreground">{{ product.category }}</td>
+                    <td class="py-3 pr-4 font-medium">{{ ctx.store.currency }}{{ product.price }}</td>
+                    <td class="py-3 pr-4">{{ product.stock }}</td>
+                    <td class="py-3">
+                      @switch (product.status) {
+                        @case ('available') {
+                          <span class="tag available">In stock</span>
+                        }
+                        @case ('sale') {
+                          <span class="tag sale">On sale</span>
+                        }
+                        @default {
+                          <span class="tag unavailable">Out of stock</span>
+                        }
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="py-6 text-center text-muted-foreground">
+                      <p class="empty">No products found.</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </and-card-content>
       </and-card>

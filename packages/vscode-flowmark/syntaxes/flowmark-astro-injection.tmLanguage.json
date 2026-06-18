@@ -5,20 +5,23 @@
   "patterns": [
     {
       "name": "meta.embedded.block.flowmark.astro",
-      "begin": "(<)(Flowmark)(\\b[^>]*\\bis:raw\\b[^>]*)(>)",
+      "begin": "(<)(Flowmark)\\b((?:[^>]|\\n)*?\\bis:raw\\b(?:[^>]|\\n)*?)(>)",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
-        "2": { "name": "entity.name.tag.astro.flowmark" },
+        "2": { "name": "support.class.component.astro.flowmark" },
         "3": { "name": "meta.tag.attributes.astro" },
         "4": { "name": "punctuation.definition.tag.end.html" }
       },
       "end": "(</)(Flowmark)(>)",
       "endCaptures": {
         "1": { "name": "punctuation.definition.tag.begin.html" },
-        "2": { "name": "entity.name.tag.astro.flowmark" },
+        "2": { "name": "support.class.component.astro.flowmark" },
         "3": { "name": "punctuation.definition.tag.end.html" }
       },
-      "patterns": [{ "include": "source.flowmark" }]
+      "contentName": "meta.embedded.flowmark",
+      "patterns": [
+        { "include": "source.flowmark" }
+      ]
     }
   ]
 }

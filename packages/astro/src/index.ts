@@ -1,26 +1,29 @@
-import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { basename, extname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import flowmarkVite, {
+  compileFlowmark,
+  type FlowmarkViteOptions,
+} from "@flowmark/vite";
 import type { AstroIntegration } from "astro";
 import type { Plugin } from "vite";
 
-export interface FlowmarkAstroOptions {
-  runtimeImport?: string;
-}
+export interface FlowmarkAstroOptions extends FlowmarkViteOptions {}
 
 interface EmbeddedTemplate {
   source: string;
   contextExpression: string;
   start: number;
   end: number;
+  lineOffset: number;
+}
+
+interface VirtualTemplate {
+  source: string;
+  filename: string;
+  lineOffset: number;
 }
 
 const VIRTUAL_PREFIX = "virtual:flowmark-astro/";
 const RESOLVED_VIRTUAL_PREFIX = "\0" + VIRTUAL_PREFIX;
-const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 export default function flowmark(
   options: FlowmarkAstroOptions = {},
@@ -31,7 +34,7 @@ export default function flowmark(
       "astro:config:setup": ({ updateConfig }) => {
         updateConfig({
           vite: {
-            plugins: [flowmarkVitePlugin(options)],
+            plugins: [flowmarkVite(options), flowmarkAstroPlugin(options)],
           },
         });
       },
@@ -39,18 +42,20 @@ export default function flowmark(
   };
 }
 
-function flowmarkVitePlugin(options: FlowmarkAstroOptions): Plugin {
+function flowmarkAstroPlugin(options: FlowmarkAstroOptions): Plugin {
   const runtimeImport = options.runtimeImport ?? "@flowmark/runtime";
-  const virtualModules = new Map<string, string>();
+  const compilerPath = options.compilerPath ?? "flowmark";
+  const virtualModules = new Map<string, VirtualTemplate>();
+  const virtualIdsByFile = new Map<string, Set<string>>();
 
   return {
-    name: "@flowmark/astro:vite",
+    name: "@flowmark/astro:embedded",
     enforce: "pre",
 
     configResolved(config) {
       const plugins = config.plugins as Plugin[];
       const ownIndex = plugins.findIndex(
-        (plugin) => plugin.name === "@flowmark/astro:vite",
+        (plugin) => plugin.name === "@flowmark/astro:embedded",
       );
       const astroIndex = plugins.findIndex(
         (plugin) => plugin.name === "astro:build",
@@ -79,36 +84,33 @@ function flowmarkVitePlugin(options: FlowmarkAstroOptions): Plugin {
 
       const publicId =
         VIRTUAL_PREFIX + id.slice(RESOLVED_VIRTUAL_PREFIX.length);
-      const source = virtualModules.get(publicId);
+      const template = virtualModules.get(publicId);
 
-      if (source === undefined) {
+      if (template === undefined) {
         throw new Error(`Missing Flowmark virtual module: ${publicId}`);
       }
 
-      return compileFlowmark(source, {
-        filename: publicId,
+      return compileFlowmark(template.source, {
+        filename: template.filename,
+        lineOffset: template.lineOffset,
         runtimeImport,
+        compilerPath,
       });
     },
 
     transform(code, id) {
       const cleanId = stripQuery(id);
 
-      if (cleanId.endsWith(".flow")) {
-        return {
-          code: compileFlowmark(code, {
-            filename: cleanId,
-            runtimeImport,
-          }),
-          map: null,
-        };
-      }
-
       if (!cleanId.endsWith(".astro") || !code.includes("flowmark")) {
         return null;
       }
 
-      const result = transformAstroSource(code, cleanId, virtualModules);
+      const result = transformAstroSource(
+        code,
+        cleanId,
+        virtualModules,
+        virtualIdsByFile,
+      );
       if (result === null) {
         return null;
       }
@@ -124,7 +126,8 @@ function flowmarkVitePlugin(options: FlowmarkAstroOptions): Plugin {
 function transformAstroSource(
   code: string,
   filename: string,
-  virtualModules: Map<string, string>,
+  virtualModules: Map<string, VirtualTemplate>,
+  virtualIdsByFile: Map<string, Set<string>>,
 ): string | null {
   const templates = findEmbeddedTemplates(code);
 
@@ -134,13 +137,25 @@ function transformAstroSource(
 
   const hash = createHash("sha256").update(filename).digest("hex").slice(0, 12);
   const imports: string[] = [];
+  const previousIds = virtualIdsByFile.get(filename);
+  previousIds?.forEach((id) => virtualModules.delete(id));
+  const currentIds = new Set<string>();
   let transformed = "";
   let cursor = 0;
 
   templates.forEach((template, index) => {
     const renderName = `__flowmarkRender${index}`;
-    const virtualId = `${VIRTUAL_PREFIX}${hash}/${index}.js`;
-    virtualModules.set(virtualId, template.source);
+    const contentHash = createHash("sha256")
+      .update(template.source)
+      .digest("hex")
+      .slice(0, 12);
+    const virtualId = `${VIRTUAL_PREFIX}${hash}/${index}-${contentHash}.js`;
+    virtualModules.set(virtualId, {
+      source: template.source,
+      filename,
+      lineOffset: template.lineOffset,
+    });
+    currentIds.add(virtualId);
     imports.push(`import { render as ${renderName} } from "${virtualId}";`);
 
     transformed += code.slice(cursor, template.start);
@@ -149,16 +164,17 @@ function transformAstroSource(
   });
 
   transformed += code.slice(cursor);
+  virtualIdsByFile.set(filename, currentIds);
 
   return injectFrontmatter(transformed, imports.join("\n"));
 }
 
 function findEmbeddedTemplates(code: string): EmbeddedTemplate[] {
   const templates: EmbeddedTemplate[] = [];
-  let cursor = 0;
+  let cursor = findFrontmatterEnd(code);
 
   while (cursor < code.length) {
-    const openStart = code.indexOf("<template", cursor);
+    const openStart = findNextTemplateOpen(code, cursor);
     if (openStart === -1) {
       break;
     }
@@ -181,7 +197,7 @@ function findEmbeddedTemplates(code: string): EmbeddedTemplate[] {
       );
     }
 
-    const closeStart = code.indexOf("</template>", openEnd + 1);
+    const closeStart = findMatchingTemplateClose(code, openEnd + 1);
     if (closeStart === -1) {
       throw new Error("Flowmark embedded template is missing </template>.");
     }
@@ -192,11 +208,81 @@ function findEmbeddedTemplates(code: string): EmbeddedTemplate[] {
       contextExpression,
       start: openStart,
       end: closeEnd,
+      lineOffset: countNewlines(code, 0, openEnd + 1),
     });
     cursor = closeEnd;
   }
 
   return templates;
+}
+
+function findFrontmatterEnd(code: string): number {
+  if (!code.startsWith("---")) return 0;
+  const closingFence = code.indexOf("\n---", 3);
+  if (closingFence === -1) return 0;
+  return closingFence + "\n---".length;
+}
+
+function findNextTemplateOpen(code: string, start: number): number {
+  let cursor = start;
+
+  while (cursor < code.length) {
+    const tagStart = code.indexOf("<", cursor);
+    if (tagStart === -1) return -1;
+
+    if (code.startsWith("<!--", tagStart)) {
+      const commentEnd = code.indexOf("-->", tagStart + 4);
+      return commentEnd === -1
+        ? -1
+        : findNextTemplateOpen(code, commentEnd + 3);
+    }
+
+    const rawTextTag = ["script", "style"].find((name) =>
+      code.startsWith(`<${name}`, tagStart),
+    );
+    if (rawTextTag !== undefined) {
+      const closeStart = code.indexOf(`</${rawTextTag}>`, tagStart + 1);
+      if (closeStart === -1) return -1;
+      cursor = closeStart + rawTextTag.length + 3;
+      continue;
+    }
+
+    if (code.startsWith("<template", tagStart)) return tagStart;
+    cursor = tagStart + 1;
+  }
+
+  return -1;
+}
+
+function findMatchingTemplateClose(code: string, start: number): number {
+  let cursor = start;
+  let depth = 1;
+
+  while (cursor < code.length) {
+    const nextOpen = code.indexOf("<template", cursor);
+    const nextClose = code.indexOf("</template>", cursor);
+    if (nextClose === -1) return -1;
+
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      depth += 1;
+      cursor = nextOpen + "<template".length;
+      continue;
+    }
+
+    depth -= 1;
+    if (depth === 0) return nextClose;
+    cursor = nextClose + "</template>".length;
+  }
+
+  return -1;
+}
+
+function countNewlines(value: string, start: number, end: number): number {
+  let count = 0;
+  for (let index = start; index < end; index += 1) {
+    if (value[index] === "\n") count += 1;
+  }
+  return count;
 }
 
 function findTagEnd(code: string, start: number): number {
@@ -305,58 +391,6 @@ function injectFrontmatter(code: string, content: string): string {
   }
 
   return `---\n${content}\n---\n\n${code}`;
-}
-
-function compileFlowmark(
-  source: string,
-  options: { filename: string; runtimeImport: string },
-): string {
-  const templatePath = writeTemplateFile(options.filename, source);
-
-  try {
-    return execFileSync(
-      "cargo",
-      [
-        "run",
-        "-p",
-        "flowmark-cli",
-        "--quiet",
-        "--",
-        "compile",
-        templatePath,
-        "--runtime",
-        options.runtimeImport,
-      ],
-      {
-        cwd: workspaceRoot,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error && "stderr" in error
-        ? String((error as Error & { stderr?: Buffer | string }).stderr)
-        : String(error);
-    throw new Error(
-      `Failed to compile Flowmark template ${options.filename}\n${message}`,
-    );
-  }
-}
-
-function writeTemplateFile(filename: string, source: string): string {
-  const key = createHash("sha256")
-    .update(filename)
-    .update(source)
-    .digest("hex");
-  const directory = join(tmpdir(), "flowmark-astro", key);
-  mkdirSync(directory, { recursive: true });
-
-  const extension = extname(filename) || ".flow";
-  const templatePath = join(directory, `${basename(filename, extension)}.flow`);
-  writeFileSync(templatePath, source);
-
-  return templatePath;
 }
 
 function stripQuery(id: string): string {

@@ -43,6 +43,19 @@ fn multiple_interpolations() {
         2,
         "expected two renderValue calls"
     );
+    assert!(output.contains("output += ' ';"));
+}
+
+#[test]
+fn preserves_significant_space_before_interpolation() {
+    let output = compile_source("<p>Hello {{ ctx.name }}</p>");
+    assert!(output.contains("output += '<p>Hello ';"));
+}
+
+#[test]
+fn preserves_preformatted_whitespace() {
+    let output = compile_source("<pre>first\n  second</pre>");
+    assert!(output.contains("output += '<pre>first\\n  second</pre>';"));
 }
 
 #[test]
@@ -203,6 +216,23 @@ fn empty_track_syntax() {
 }
 
 #[test]
+fn rejects_invalid_or_internal_loop_bindings() {
+    for binding in ["item-name", "output", "ctx", "__items0", "class"] {
+        let source = format!("@for ({binding} of ctx.items) {{ <p></p> }}");
+        let errors = expect_error(&source);
+        assert!(errors.iter().any(|message| message.contains("binding")));
+    }
+}
+
+#[test]
+fn supports_semicolons_inside_for_expressions() {
+    let output = compile_source(
+        "@for (item of ctx.find('a;b'); track (() => { return item.id; })()) { {{ item }} }",
+    );
+    assert!(output.contains("Array.from((ctx.find('a;b')) ?? [])"));
+}
+
+#[test]
 fn invalid_for_syntax() {
     let errors = expect_error("@for (item in ctx.items; track item.id) { <p></p> }");
     assert!(errors.iter().any(|m| m.contains("@for")));
@@ -212,6 +242,45 @@ fn invalid_for_syntax() {
 fn unclosed_interpolation() {
     let errors = expect_error("<p>{{ ctx.title</p>");
     assert!(errors.iter().any(|m| m.contains("Unclosed interpolation")));
+}
+
+#[test]
+fn rejects_empty_interpolation_and_conditions() {
+    assert!(expect_error("{{ }}")
+        .iter()
+        .any(|message| message.contains("cannot be empty")));
+    assert!(expect_error("@if () { <p></p> }")
+        .iter()
+        .any(|message| message.contains("cannot be empty")));
+}
+
+#[test]
+fn interpolation_supports_object_literals() {
+    let output = compile_source("{{ { value: 1 } }}");
+    assert!(output.contains("renderValue({ value: 1 })"));
+}
+
+#[test]
+fn requires_quotes_around_interpolated_attribute_values() {
+    let errors = expect_error("<div data-value={{ ctx.value }}></div>");
+    assert!(errors
+        .iter()
+        .any(|message| message.contains("quoted attribute")));
+
+    let output = compile_source("<div data-value=\"{{ ctx.value }}\"></div>");
+    assert!(output.contains("renderValue(ctx.value)"));
+}
+
+#[test]
+fn expressions_ignore_parentheses_inside_comments() {
+    let output = compile_source("@if (ctx.ok /* ) */) { <p>OK</p> }");
+    assert!(output.contains("if (ctx.ok /* ) */)"));
+}
+
+#[test]
+fn expressions_support_regular_expression_literals() {
+    let output = compile_source(r"@if (/\)/.test(ctx.value)) { <p>OK</p> }");
+    assert!(output.contains(r"if (/\)/.test(ctx.value))"));
 }
 
 #[test]

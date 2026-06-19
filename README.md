@@ -17,7 +17,7 @@ Angular-inspired control flow syntax. It is not a framework. It transforms
 ```
 
 ```js
-import { escapeHtml, renderValue } from "@flowmark/runtime";
+import { renderValue } from "@flowmark/runtime";
 
 export function render(ctx) {
   let output = "";
@@ -37,6 +37,8 @@ small, but syntax and generated output may still change before a stable release.
 - A Rust compiler crate: `flowmark-compiler`
 - A Rust CLI: `flowmark`
 - A tiny TypeScript runtime package: `@flowmark/runtime`
+- A Vite plugin: `@flowmark/vite`
+- An Astro integration: `@flowmark/astro`
 - A framework-agnostic template experiment
 - A monorepo with a working Astro demo
 
@@ -51,7 +53,7 @@ Flowmark does not provide:
 - Directives
 - Dependency injection
 - A virtual DOM
-- A built-in Vite, Astro, React, or Hono integration
+- A built-in React or Hono integration
 - Angular compatibility or Angular dependencies
 
 ## Why It Exists
@@ -98,6 +100,12 @@ yourself.
 Values interpolated from `ctx` are escaped by default through
 `@flowmark/runtime`.
 
+HTML escaping is safe for normal text and quoted HTML attribute values. Flowmark
+rejects interpolation in unquoted attributes. Escaping is not URL, CSS, or
+JavaScript sanitization. Do not interpolate untrusted values into
+`<script>` or `<style>` content, event-handler attributes, or URL-bearing
+attributes without validation appropriate to that context.
+
 ## Repository Layout
 
 ```text
@@ -106,7 +114,10 @@ flowmark/
 │   ├── flowmark-compiler/   # Rust compiler library
 │   └── flowmark-cli/        # Rust CLI binary
 ├── packages/
-│   └── runtime/             # TypeScript runtime helpers
+│   ├── runtime/             # TypeScript runtime helpers
+│   ├── vite/                # Standalone .flow imports
+│   ├── astro/               # Astro integration
+│   └── vscode-flowmark/     # Editor support
 ├── examples/
 │   ├── basic/               # Small .flow examples
 │   └── astro-demo/          # Astro demo site
@@ -140,8 +151,21 @@ Individual builds:
 ```sh
 pnpm run build:rust
 pnpm run build:runtime
+pnpm run build:vite
 pnpm run build:demo
 ```
+
+## Use With Vite
+
+```ts
+import flowmark from "@flowmark/vite";
+
+export default {
+  plugins: [flowmark({ compilerPath: "/path/to/flowmark" })],
+};
+```
+
+The plugin compiles `.flow` imports at build time using the prebuilt CLI.
 
 ## Test
 
@@ -187,6 +211,10 @@ with `<template flowmark>`:
 
 The integration transforms embedded Flowmark templates before Astro parses the
 page, so the supported path does not require `is:raw` or a wrapper component.
+It invokes a prebuilt `flowmark` CLI from `PATH`; pass
+`flowmark({ compilerPath: "/path/to/flowmark" })` when the binary lives
+elsewhere. The integration never runs Cargo and sends templates over stdin, so
+it does not create temporary source files.
 
 ## Editor Support
 
@@ -203,6 +231,12 @@ Compile a `.flow` file to stdout:
 
 ```sh
 cargo run -p flowmark-cli -- compile examples/basic/for.flow
+```
+
+The CLI also accepts stdin, which is the supported integration boundary:
+
+```sh
+printf '<h1>{{ ctx.title }}</h1>' | flowmark compile - --display-name inline.flow
 ```
 
 Compile to a file:

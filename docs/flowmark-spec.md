@@ -202,6 +202,8 @@ Required behavior:
 - The expression is emitted as JavaScript source.
 - The resulting value is escaped by default through the runtime.
 - `null`, `undefined`, and `false` render as an empty string.
+- HTML escaping does not imply URL, CSS, or JavaScript sanitization. Hosts must
+  validate values used in those contexts.
 
 ### 6.3 Conditional Blocks
 

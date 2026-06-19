@@ -1,0 +1,16 @@
+---
+const context = {
+  name: "Flowmark",
+  markup: `<img src=x onerror="globalThis.__flowmarkXss = true">`,
+};
+---
+
+<!-- prettier-ignore -->
+<template flowmark context={context}>
+  <main>
+    <p id="space"><span>Hello </span>{{ ctx.name }}</p>
+    <pre id="pre">first
+  second</pre>
+    <p id="escaped">{{ ctx.markup }}</p>
+  </main>
+</template>

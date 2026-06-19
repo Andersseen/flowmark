@@ -1,0 +1,1 @@
+<p id="standalone">Hello {{ ctx.name }}</p>

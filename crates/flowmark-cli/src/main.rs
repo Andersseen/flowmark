@@ -1,6 +1,11 @@
 use clap::{Parser, Subcommand};
 use flowmark_compiler::{compile, CompileOptions, DiagnosticSeverity};
-use std::{fs, path::Path, process};
+use std::{
+    fs,
+    io::{self, Read},
+    path::Path,
+    process,
+};
 
 #[derive(Parser)]
 #[command(name = "flowmark")]
@@ -24,6 +29,14 @@ enum Command {
         /// Runtime module import path
         #[arg(long, default_value = "@flowmark/runtime")]
         runtime: String,
+
+        /// Filename shown in generated diagnostics (useful when compiling stdin)
+        #[arg(long)]
+        display_name: Option<String>,
+
+        /// Number of source lines to add to diagnostic locations
+        #[arg(long, default_value_t = 0)]
+        line_offset: usize,
     },
 }
 
@@ -35,27 +48,52 @@ fn main() {
             input,
             out,
             runtime,
-        } => compile_file(&input, out.as_deref(), &runtime),
+            display_name,
+            line_offset,
+        } => compile_file(
+            &input,
+            out.as_deref(),
+            &runtime,
+            display_name.as_deref(),
+            line_offset,
+        ),
     }
 }
 
-fn compile_file(input: &str, out: Option<&str>, runtime: &str) {
+fn compile_file(
+    input: &str,
+    out: Option<&str>,
+    runtime: &str,
+    display_name: Option<&str>,
+    line_offset: usize,
+) {
     let path = Path::new(input);
 
-    if path.extension().and_then(|ext| ext.to_str()) != Some("flow") {
+    if input != "-" && path.extension().and_then(|ext| ext.to_str()) != Some("flow") {
         eprintln!("{}: expected a .flow file", input);
         process::exit(1);
     }
 
-    let source = match fs::read_to_string(path) {
-        Ok(source) => source,
-        Err(error) => {
-            eprintln!("Failed to read {}: {}", input, error);
+    let source = if input == "-" {
+        let mut source = String::new();
+        if let Err(error) = io::stdin().read_to_string(&mut source) {
+            eprintln!("Failed to read stdin: {}", error);
             process::exit(1);
+        }
+        source
+    } else {
+        match fs::read_to_string(path) {
+            Ok(source) => source,
+            Err(error) => {
+                eprintln!("Failed to read {}: {}", input, error);
+                process::exit(1);
+            }
         }
     };
 
-    let options = CompileOptions::new(runtime).with_filename(input);
+    let diagnostic_name = display_name.unwrap_or(input);
+
+    let options = CompileOptions::new(runtime).with_filename(diagnostic_name);
 
     match compile(&source, options) {
         Ok(output) => {
@@ -81,7 +119,12 @@ fn compile_file(input: &str, out: Option<&str>, runtime: &str) {
                     .unwrap_or_default();
                 eprintln!(
                     "{}:{}:{}: {}{}: {}",
-                    input, diagnostic.line, diagnostic.column, severity, code, diagnostic.message
+                    diagnostic_name,
+                    diagnostic.line + line_offset,
+                    diagnostic.column,
+                    severity,
+                    code,
+                    diagnostic.message
                 );
             }
             process::exit(1);

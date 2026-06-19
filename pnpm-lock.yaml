@@ -57,6 +57,9 @@ importers:
       '@flowmark/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@flowmark/vite':
+        specifier: workspace:*
+        version: link:../vite
     devDependencies:
       '@types/node':
         specifier: ^26.0.0
@@ -82,6 +85,28 @@ importers:
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@26.0.0)(jiti@2.7.0)(lightningcss@1.32.0)
+
+  packages/vite:
+    dependencies:
+      '@flowmark/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+    devDependencies:
+      '@types/node':
+        specifier: ^26.0.0
+        version: 26.0.0
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(@types/node@26.0.0)(jiti@2.7.0)(lightningcss@1.32.0)
       vitest:
         specifier: ^3.0.0
         version: 3.2.6(@types/debug@4.1.13)(@types/node@26.0.0)(jiti@2.7.0)(lightningcss@1.32.0)

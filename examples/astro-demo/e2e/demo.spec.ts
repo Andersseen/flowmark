@@ -28,3 +28,22 @@ test("renders the @empty branch page", async ({ page }) => {
     ),
   ).toBeVisible();
 });
+
+test("preserves whitespace and escapes interpolated HTML", async ({ page }) => {
+  await page.goto("/security");
+
+  await expect(page.locator("#space")).toHaveText("Hello Flowmark");
+  await expect(page.locator("#pre")).toHaveText("first\n  second");
+  await expect(page.locator("#escaped")).toHaveText(
+    '<img src=x onerror="globalThis.__flowmarkXss = true">',
+  );
+  await expect(page.locator("#escaped img")).toHaveCount(0);
+  expect(await page.evaluate(() => globalThis.__flowmarkXss)).toBeUndefined();
+});
+
+test("imports a standalone .flow template through Vite", async ({ page }) => {
+  await page.goto("/standalone");
+  await expect(page.locator("#standalone")).toHaveText(
+    "Hello from a standalone template",
+  );
+});

@@ -15,7 +15,7 @@ pub fn generate(root: &RootNode, options: &CompileOptions) -> String {
     }
 
     format!(
-        "import {{ escapeHtml, renderValue }} from '{}';
+        "import {{ renderValue }} from '{}';
 
 export function render(ctx) {{
   let output = '';{}
@@ -62,39 +62,16 @@ fn generate_node(node: &Node, output: &mut String, indent: usize, ctx: &mut Code
 }
 
 fn generate_text(text: &TextNode, output: &mut String, indent: usize) {
-    let collapsed = collapse_html_whitespace(&text.value);
-    if collapsed.is_empty() {
+    if text.value.is_empty() {
         return;
     }
 
     let line = format!(
         "{}output += '{}';\n",
         spaces(indent),
-        escape_js_string(&collapsed)
+        escape_js_string(&text.value)
     );
     output.push_str(&line);
-}
-
-/// Collapses runs of whitespace (including newlines) into a single space.
-/// This matches how HTML renders whitespace and keeps the generated output
-/// free of indentation-only text nodes.
-fn collapse_html_whitespace(value: &str) -> String {
-    let mut result = String::with_capacity(value.len());
-    let mut in_whitespace = false;
-
-    for ch in value.chars() {
-        if ch.is_whitespace() {
-            in_whitespace = true;
-        } else {
-            if in_whitespace {
-                result.push(' ');
-                in_whitespace = false;
-            }
-            result.push(ch);
-        }
-    }
-
-    result
 }
 
 fn generate_if_block(

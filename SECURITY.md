@@ -28,3 +28,15 @@ user-submitted templates unless you sandbox the generated code yourself.
 
 Values interpolated from `ctx` are escaped by default through the runtime
 helpers.
+
+## Context-Specific Safety
+
+The runtime performs HTML escaping. It does not sanitize URL schemes, CSS, or
+JavaScript. In particular, HTML escaping alone cannot make untrusted values safe
+inside `<script>` or `<style>` elements, `on*` event attributes, or URL-bearing
+attributes such as `href` and `src`.
+
+Validate values for their destination context. Prefer interpolation in normal
+text and quoted ordinary data attributes; unquoted attribute interpolation is
+rejected by the compiler. Flowmark does not currently provide a raw HTML escape
+hatch or context-aware URL/CSS/JavaScript sanitizers.

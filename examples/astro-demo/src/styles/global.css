@@ -1,0 +1,160 @@
+@import "tailwindcss";
+@import "@andersseen/layout";
+@import "@andersseen/motion/style.css";
+@import "@andersseen/web-components/slate-amber";
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-mono:
+    "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  code,
+  pre {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer components {
+  .app-shell {
+    min-height: 100vh;
+    background:
+      linear-gradient(
+        180deg,
+        hsl(var(--background)) 0%,
+        hsl(var(--muted) / 0.45) 100%
+      ),
+      hsl(var(--background));
+  }
+
+  .page-frame {
+    width: min(1180px, calc(100% - 32px));
+    margin-inline: auto;
+  }
+
+  .hero-panel {
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+  }
+
+  .preview-surface {
+    min-height: 420px;
+    border-radius: 8px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    padding: 24px;
+  }
+
+  .flow-preview main {
+    display: grid;
+    gap: 18px;
+  }
+
+  .flow-preview h1 {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 760;
+    letter-spacing: 0;
+  }
+
+  .flow-preview h2 {
+    margin: 8px 0 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .flow-preview p {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .flow-preview article {
+    display: grid;
+    gap: 8px;
+    border-radius: 8px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    padding: 16px;
+  }
+
+  .flow-preview article h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .flow-preview .tag {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .flow-preview .tag.available {
+    background: hsl(var(--success) / 0.13);
+    color: hsl(var(--success));
+  }
+
+  .flow-preview .tag.sale {
+    background: hsl(var(--warning) / 0.16);
+    color: hsl(32 95% 34%);
+  }
+
+  .flow-preview .tag.unavailable {
+    background: hsl(var(--destructive) / 0.12);
+    color: hsl(var(--destructive));
+  }
+
+  .flow-preview .empty {
+    border-radius: 8px;
+    border: 1px dashed hsl(var(--border));
+    background: hsl(var(--muted) / 0.5);
+    padding: 18px;
+    color: hsl(var(--muted-foreground));
+  }
+}

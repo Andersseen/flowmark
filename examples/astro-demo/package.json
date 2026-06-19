@@ -4,15 +4,26 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "compile:templates": "node scripts/compile-flow.mjs",
-    "predev": "pnpm run compile:templates",
     "dev": "astro dev",
-    "prebuild": "pnpm run compile:templates",
+    "dev:e2e": "astro dev --host 127.0.0.1 --port 4321",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "pnpm run test:unit",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@andersseen/layout": "^0.0.1",
+    "@andersseen/motion": "^0.1.1",
+    "@andersseen/web-components": "^0.0.8",
+    "@flowmark/astro": "workspace:*",
     "@flowmark/runtime": "workspace:*",
     "astro": "^5.7.10"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@tailwindcss/vite": "^4.3.1",
+    "tailwindcss": "^4.3.1",
+    "vitest": "^3.2.6"
   }
 }

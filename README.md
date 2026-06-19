@@ -1,155 +1,203 @@
 # Flowmark
 
-Flowmark is a small, standalone compiler for HTML-like templates with
-Angular-inspired control flow syntax. It is not a framework. It does not provide
-runtime components, signals, or hydration. It only transforms `.flow` template
-files into plain JavaScript render functions.
+Flowmark is a small Rust compiler for HTML-like templates with
+Angular-inspired control flow syntax. It is not a framework. It transforms
+`.flow` files into plain JavaScript render functions.
+
+```text
+<main>
+  <h1>{{ ctx.title }}</h1>
+
+  @for (product of ctx.products; track product.id) {
+    <article>{{ product.title }}</article>
+  } @empty {
+    <p>No products found.</p>
+  }
+</main>
+```
+
+```js
+import { escapeHtml, renderValue } from "@flowmark/runtime";
+
+export function render(ctx) {
+  let output = "";
+  const __items0 = Array.from(ctx.products ?? []);
+  // ...
+  return output;
+}
+```
+
+## Status
+
+Flowmark is experimental and pre-stable. The public shape is intentionally
+small, but syntax and generated output may still change before a stable release.
 
 ## What Flowmark Is
 
-- A Rust template compiler crate (`flowmark-compiler`).
-- A Rust CLI (`flowmark`) for compiling template files.
-- A tiny TypeScript runtime package (`@flowmark/runtime`) for HTML escaping and
-  render-value helpers.
-- A monorepo foundation that is intentionally small and easy to extend.
+- A Rust compiler crate: `flowmark-compiler`
+- A Rust CLI: `flowmark`
+- A tiny TypeScript runtime package: `@flowmark/runtime`
+- A framework-agnostic template experiment
+- A monorepo with a working Astro demo
 
 ## What Flowmark Is Not
 
-- Not a framework.
-- Not an Angular, React, Astro, or Hono integration.
-- Not a hydration runtime.
-- Not a compiler for directives, dependency injection, signals, pipes,
-  components, events, or `@defer` blocks.
+Flowmark does not provide:
+
+- Components
+- Hydration
+- Signals
+- Events
+- Directives
+- Dependency injection
+- A virtual DOM
+- A built-in Vite, Astro, React, or Hono integration
+- Angular compatibility or Angular dependencies
 
 ## Why It Exists
 
-Modern control-flow syntax such as `@if`, `@for`, and `@switch` is productive for
-templates, but it is usually tied to a full framework. Flowmark explores whether
-that syntax can be compiled into plain JavaScript render functions that are
-independent from any UI framework or build tool.
+Modern control-flow syntax such as `@if`, `@for`, and `@switch` is productive
+inside templates, but it is usually tied to a full UI framework. Flowmark
+explores whether that authoring style can compile into plain JavaScript render
+functions that are easy to run from any host environment.
 
-## Current Compiler Scope
+## Supported Syntax
 
-The compiler exposes a single public function:
+Flowmark currently supports:
 
-```rust
-pub fn compile(
-    source: &str,
-    options: CompileOptions
-) -> Result<CompileOutput, Vec<Diagnostic>>;
-```
-
-It currently supports:
-
-- Plain text and HTML-like markup.
-- Escaped interpolation: `{{ ctx.title }}`.
+- Plain text and HTML-like markup
+- Escaped interpolation: `{{ ctx.title }}`
 - Conditional blocks:
   - `@if (condition) { ... }`
   - `@else if (condition) { ... }`
   - `@else { ... }`
 - Iteration blocks:
+  - `@for (item of items) { ... }`
   - `@for (item of items; track item.id) { ... }`
-  - `@for (item of items) { ... }` (`track` is optional)
   - `@empty { ... }`
-  - The iterable is normalized with `Array.from`, so arrays, `Set`, `Map`,
-    generators, and array-like objects all work.
 - Switch blocks:
   - `@switch (expr) { @case ('a') { ... } @default { ... } }`
 
-Expressions are preserved as JavaScript source strings. The compiler does not
-type-check or evaluate them.
+Iterables are normalized with `Array.from`, so arrays, sets, maps, generators,
+and array-like objects can be rendered.
 
-## Repository Architecture
+`track` is accepted as reserved syntax for future integrations. Since Flowmark
+currently renders strings and does not diff DOM nodes, `track` has no runtime
+effect today.
 
-```
+To render syntax markers literally in text, escape the leading character:
+`\@if`, `\{{`, and `\}`.
+
+## Security Model
+
+`.flow` files are trusted source code. Flowmark preserves expressions as
+JavaScript source strings and emits them into the generated render function.
+Do not compile user-submitted templates unless you sandbox the generated code
+yourself.
+
+Values interpolated from `ctx` are escaped by default through
+`@flowmark/runtime`.
+
+## Repository Layout
+
+```text
 flowmark/
-├── Cargo.toml
-├── package.json
-├── pnpm-workspace.yaml
 ├── crates/
 │   ├── flowmark-compiler/   # Rust compiler library
 │   └── flowmark-cli/        # Rust CLI binary
 ├── packages/
-│   └── runtime/             # TypeScript runtime
-└── examples/
-    ├── basic/               # Example .flow templates
-    └── astro-demo/          # Astro site demo using the compiler
+│   └── runtime/             # TypeScript runtime helpers
+├── examples/
+│   ├── basic/               # Small .flow examples
+│   └── astro-demo/          # Astro demo site
+├── Cargo.toml
+├── package.json
+└── pnpm-workspace.yaml
 ```
 
-### Why Rust for the Compiler?
+## Requirements
 
-Rust provides a fast, safe parser and code generator that can be embedded in
-build tools, CLIs, or other Rust programs without a JavaScript runtime.
+- Node.js 22 or newer
+- pnpm 10.30.1 or compatible
+- Rust stable
 
-### Why TypeScript for the Runtime?
-
-The runtime is a tiny set of helpers consumed by the generated JavaScript. Using
-TypeScript keeps the runtime small, typed, and tree-shakeable.
-
-## Install Dependencies
-
-This repository uses pnpm and Cargo. Make sure both are installed, then run:
+## Install
 
 ```sh
 pnpm install
 ```
 
-Rust dependencies are fetched automatically by Cargo.
+Cargo fetches Rust dependencies automatically when Rust commands run.
 
-## Build the Project
+## Build
 
 ```sh
 pnpm run build
 ```
 
-This builds the Rust workspace and the TypeScript runtime.
-
 Individual builds:
 
 ```sh
-pnpm run build:rust     # cargo build --workspace
-pnpm run build:runtime  # pnpm --filter @flowmark/runtime build
+pnpm run build:rust
+pnpm run build:runtime
+pnpm run build:demo
 ```
 
-## Run Tests
+## Test
 
 ```sh
 pnpm run test
 ```
 
-Individual test suites:
+Individual suites:
 
 ```sh
-pnpm run test:rust     # cargo test --workspace
-pnpm run test:runtime  # pnpm --filter @flowmark/runtime test
+pnpm run test:rust
+pnpm run test:runtime
+pnpm run test:demo
 ```
 
-## Astro Demo
-
-The `examples/astro-demo` directory contains a working Astro site that uses the
-Flowmark compiler to render `.flow` templates at build time.
+The Astro demo also has a Playwright suite:
 
 ```sh
-cd examples/astro-demo
-pnpm run dev
+pnpm --filter @flowmark/astro-demo exec playwright install chromium
+pnpm run test:e2e:demo
 ```
 
-The demo compiles `src/templates/index.flow` into `src/generated/index.js` and
-renders it inside an Astro page.
-
-### Deploy the demo
-
-Build and deploy to Cloudflare Pages from the root:
+## Run The Astro Demo
 
 ```sh
-pnpm run deploy:demo
+pnpm run demo
 ```
 
-For CI deployment, add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as
-GitHub repository secrets. The workflow is defined in
-`.github/workflows/deploy-demo.yml`.
+The demo uses Astro, Tailwind CSS 4, `@andersseen/web-components`, and the
+local `@flowmark/astro` integration. Inline Flowmark templates can be authored
+with `<template flowmark>`:
 
-## Run the CLI
+```text
+<template flowmark context={context}>
+  <main>
+    <h1>{{ ctx.title }}</h1>
+    @if (ctx.featured) {
+      <span>Featured</span>
+    }
+  </main>
+</template>
+```
+
+The integration transforms embedded Flowmark templates before Astro parses the
+page, so the supported path does not require `is:raw` or a wrapper component.
+
+## Editor Support
+
+The repository includes a local VS Code language support package at
+`packages/vscode-flowmark`. It contributes:
+
+- `.flow` syntax highlighting
+- Flowmark snippets
+- basic highlighting for `<template flowmark>` blocks inside `.astro` files
+
+## Run The CLI
 
 Compile a `.flow` file to stdout:
 
@@ -166,74 +214,23 @@ cargo run -p flowmark-cli -- compile examples/basic/for.flow --out for.js
 Use a custom runtime import path:
 
 ```sh
-cargo run -p flowmark-cli -- compile examples/basic/for.flow --runtime '#flowmark/runtime'
+cargo run -p flowmark-cli -- compile examples/basic/for.flow --runtime "#flowmark/runtime"
 ```
 
-Or use the root shortcut:
+## Contributing
 
-```sh
-pnpm run compile:example
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
 
-## Example Flowmark Input
+## Specification
 
-`examples/basic/for.flow`:
+See [docs/flowmark-spec.md](./docs/flowmark-spec.md) for the draft
+specification and integration roadmap.
 
-```flow
-<main>
-  <h1>{{ ctx.title }}</h1>
+## Security
 
-  @for (product of ctx.products; track product.id) {
-    <article>{{ product.title }}</article>
-  } @empty {
-    <p>No products found</p>
-  }
-</main>
-```
-
-## Example Generated JavaScript
-
-```js
-import { escapeHtml, renderValue } from '@flowmark/runtime';
-
-export function render(ctx) {
-  let output = '';
-  const __items0 = Array.from((ctx.products) ?? []);
-  if (__items0.length === 0) {
-    output += ' <p>No products found</p>';
-  } else {
-    for (const product of __items0) {
-      output += ' <article>';
-      output += renderValue(product.title);
-      output += '</article>';
-    }
-  }
-
-  return output;
-}
-```
-
-The compiler collapses whitespace-only formatting into single spaces so the
-generated output stays compact while remaining valid HTML.
-
-## Current Limitations
-
-Flowmark is intentionally limited to control-flow compilation. It does not
-support, and there are no plans to add:
-
-- Components
-- Events
-- `@defer` blocks
-- Signals
-- Hydration
-- Vite integration
-- Hono integration
-- Astro integration
-- Angular compatibility or Angular dependencies
-- Expression type-checking
-- Pipes, directives, or dependency injection
-- JSX or TSX
+See [SECURITY.md](./SECURITY.md) for the security policy and template trust
+model.
 
 ## License
 
-MIT
+MIT. See [LICENSE](./LICENSE).

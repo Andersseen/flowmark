@@ -1,0 +1,74 @@
+# Contributing
+
+Thanks for your interest in Flowmark. This project is still early, so the best
+contributions are small, well-scoped changes that make the compiler easier to
+trust.
+
+## Development Setup
+
+Requirements:
+
+- Node.js 22 or newer
+- pnpm 10.30.1 or compatible
+- Rust stable
+
+Install dependencies:
+
+```sh
+pnpm install
+```
+
+Run the main checks:
+
+```sh
+pnpm run build
+pnpm run test
+```
+
+Run the Astro demo:
+
+```sh
+pnpm run demo
+```
+
+## Repository Layout
+
+- `crates/flowmark-compiler`: Rust compiler library
+- `crates/flowmark-cli`: Rust CLI
+- `packages/runtime`: TypeScript runtime helpers
+- `examples/astro-demo`: Astro demo site
+- `examples/basic`: small `.flow` examples
+
+## Contribution Guidelines
+
+- Keep compiler changes covered by Rust tests.
+- Keep runtime changes covered by Vitest tests.
+- Keep demo-only changes inside `examples/astro-demo`.
+- Do not add framework features to the compiler unless the project scope changes.
+- Document syntax changes in `README.md`.
+- Prefer clear diagnostics over panics.
+
+## Pull Requests
+
+Before opening a pull request:
+
+```sh
+pnpm run format
+pnpm run test
+pnpm run build
+```
+
+If your change affects the demo, also run:
+
+```sh
+pnpm run build:demo
+pnpm --filter @flowmark/astro-demo run test:unit
+```
+
+Playwright browser binaries are not committed. Install them locally before
+running the demo end-to-end suite:
+
+```sh
+pnpm --filter @flowmark/astro-demo exec playwright install chromium
+pnpm --filter @flowmark/astro-demo run test:e2e
+```

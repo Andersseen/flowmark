@@ -2,25 +2,46 @@
   "name": "flowmark",
   "version": "0.1.0",
   "private": true,
+  "description": "A small Rust compiler for HTML-like templates with Angular-inspired control flow.",
   "license": "MIT",
   "packageManager": "pnpm@10.30.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andersseen/flowmark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/andersseen/flowmark/issues"
+  },
+  "homepage": "https://github.com/andersseen/flowmark#readme",
+  "keywords": [
+    "template",
+    "compiler",
+    "rust",
+    "javascript",
+    "html",
+    "control-flow"
+  ],
   "scripts": {
-    "build": "pnpm run build:rust && pnpm run build:runtime",
+    "build": "pnpm run build:rust && pnpm run build:runtime && pnpm run build:astro",
     "build:rust": "cargo build --workspace",
     "build:runtime": "pnpm --filter @flowmark/runtime build",
-    "test": "pnpm run test:rust && pnpm run test:runtime",
+    "build:astro": "pnpm --filter @flowmark/astro build",
+    "test": "pnpm run test:rust && pnpm run test:runtime && pnpm run test:demo",
     "test:rust": "cargo test --workspace",
     "test:runtime": "pnpm --filter @flowmark/runtime test",
+    "test:demo": "pnpm --filter @flowmark/astro-demo run test:unit",
+    "test:e2e:demo": "pnpm run build:astro && pnpm --filter @flowmark/astro-demo run test:e2e",
     "format": "pnpm run format:rust && pnpm run format:ts",
     "format:rust": "cargo fmt --all",
-    "format:ts": "prettier --write --no-error-on-unmatched-pattern \"packages/**/*.ts\" \"packages/**/*.mjs\" \"examples/**/*.ts\" \"examples/**/*.mjs\" ",
+    "format:ts": "prettier --write --no-error-on-unmatched-pattern \"**/*.{astro,css,js,json,md,mjs,ts,yml,yaml}\"",
     "compile:example": "cargo run -p flowmark-cli -- compile examples/basic/for.flow",
-    "demo": "pnpm --filter @flowmark/astro-demo dev",
-    "build:demo": "pnpm --filter @flowmark/astro-demo run build",
+    "demo": "pnpm run build:astro && pnpm --filter @flowmark/astro-demo dev",
+    "build:demo": "pnpm run build:astro && pnpm --filter @flowmark/astro-demo run build",
     "deploy:demo": "pnpm run build:demo && pnpm exec wrangler pages deploy examples/astro-demo/dist --project-name=flowmark-demo"
   },
   "devDependencies": {
     "prettier": "^3.5.0",
+    "prettier-plugin-astro": "^0.14.1",
     "wrangler": "^3.0.0"
   }
 }

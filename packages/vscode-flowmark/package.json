@@ -21,13 +21,21 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "categories": ["Programming Languages", "Snippets"],
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
   "contributes": {
     "languages": [
       {
         "id": "flowmark",
-        "aliases": ["Flowmark", "flowmark"],
-        "extensions": [".flow"],
+        "aliases": [
+          "Flowmark",
+          "flowmark"
+        ],
+        "extensions": [
+          ".flow"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -40,7 +48,9 @@
       {
         "scopeName": "flowmark.astro.injection",
         "path": "./syntaxes/flowmark-astro-injection.tmLanguage.json",
-        "injectTo": ["source.astro"]
+        "injectTo": [
+          "source.astro"
+        ]
       }
     ],
     "snippets": [

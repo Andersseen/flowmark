@@ -4,7 +4,7 @@ Flowmark is a small Rust compiler for HTML-like templates with
 Angular-inspired control flow syntax. It is not a framework. It transforms
 `.flow` files into plain JavaScript render functions.
 
-```flow
+```text
 <main>
   <h1>{{ ctx.title }}</h1>
 
@@ -170,23 +170,23 @@ pnpm run test:e2e:demo
 pnpm run demo
 ```
 
-The demo uses Astro, Tailwind CSS 4, and
-`@andersseen/web-components`. It also includes an experimental Astro component
-that renders inline Flowmark templates:
+The demo uses Astro, Tailwind CSS 4, `@andersseen/web-components`, and the
+local `@flowmark/astro` integration. Inline Flowmark templates can be authored
+with `<template flowmark>`:
 
-```astro
-<Flowmark context={context} is:raw>
+```text
+<template flowmark context={context}>
   <main>
     <h1>{{ ctx.title }}</h1>
     @if (ctx.featured) {
       <span>Featured</span>
     }
   </main>
-</Flowmark>
+</template>
 ```
 
-`is:raw` is currently required so Astro passes the template body through without
-parsing it as Astro markup.
+The integration transforms embedded Flowmark templates before Astro parses the
+page, so the supported path does not require `is:raw` or a wrapper component.
 
 ## Editor Support
 
@@ -195,7 +195,7 @@ The repository includes a local VS Code language support package at
 
 - `.flow` syntax highlighting
 - Flowmark snippets
-- basic highlighting for `<Flowmark is:raw>` blocks inside `.astro` files
+- basic highlighting for `<template flowmark>` blocks inside `.astro` files
 
 ## Run The CLI
 

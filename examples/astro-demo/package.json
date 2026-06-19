@@ -16,6 +16,7 @@
     "@andersseen/layout": "^0.0.1",
     "@andersseen/motion": "^0.1.1",
     "@andersseen/web-components": "^0.0.8",
+    "@flowmark/astro": "workspace:*",
     "@flowmark/runtime": "workspace:*",
     "astro": "^5.7.10"
   },

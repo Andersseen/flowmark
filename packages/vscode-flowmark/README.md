@@ -5,7 +5,7 @@ VS Code extension for [Flowmark](https://github.com/andersseen/flowmark) templat
 ## Features
 
 - Syntax highlighting for `.flow` files.
-- Inline Flowmark highlighting inside Astro `<Flowmark context={...} is:raw>` blocks.
+- Inline Flowmark highlighting inside Astro `<template flowmark context={...}>` blocks.
 - Snippets for Flowmark control flow (`@if`, `@for`, `@switch`) and Astro embedding.
 
 ## Supported syntax
@@ -58,19 +58,22 @@ Flowmark control markers can be escaped with a backslash:
 
 ## Usage in Astro
 
-The extension injects the Flowmark grammar inside `<Flowmark is:raw>` component tags, regardless of attribute order:
+The extension injects the Flowmark grammar inside `<template flowmark>` tags:
 
-```astro
+```text
 ---
-import Flowmark from "../components/Flowmark.astro";
+const context = {
+  title: "Inventory",
+  featured: true,
+};
 ---
 
-<Flowmark context={myContext} is:raw>
+<template flowmark context={context}>
   <h1>{{ ctx.title }}</h1>
   @if (ctx.featured) {
     <span>Featured</span>
   }
-</Flowmark>
+</template>
 ```
 
 ## Installation from a VSIX
@@ -90,9 +93,9 @@ code --install-extension packages/vscode-flowmark/dist/flowmark-language-support
 
 ## Packaging scripts
 
-| Script | Description |
-| --- | --- |
-| `pnpm --filter vscode-flowmark run package` | Build a release `.vsix`. |
+| Script                                                  | Description                  |
+| ------------------------------------------------------- | ---------------------------- |
+| `pnpm --filter vscode-flowmark run package`             | Build a release `.vsix`.     |
 | `pnpm --filter vscode-flowmark run package:pre-release` | Build a pre-release `.vsix`. |
 
 ## License

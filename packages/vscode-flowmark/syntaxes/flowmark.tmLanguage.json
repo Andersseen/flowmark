@@ -40,9 +40,7 @@
           "endCaptures": {
             "0": { "name": "punctuation.section.embedded.end.flowmark" }
           },
-          "patterns": [
-            { "include": "source.js" }
-          ]
+          "patterns": [{ "include": "source.js" }]
         }
       ]
     },
@@ -130,10 +128,7 @@
       "endCaptures": {
         "0": { "name": "punctuation.section.parens.end.flowmark" }
       },
-      "patterns": [
-        { "include": "#nested-parens" },
-        { "include": "source.js" }
-      ]
+      "patterns": [{ "include": "#nested-parens" }, { "include": "source.js" }]
     },
     "control-operator": {
       "match": "\\b(of|track)\\b",
@@ -149,9 +144,7 @@
       "endCaptures": {
         "0": { "name": "punctuation.section.block.end.flowmark" }
       },
-      "patterns": [
-        { "include": "$self" }
-      ]
+      "patterns": [{ "include": "$self" }]
     }
   }
 }

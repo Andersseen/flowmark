@@ -10,7 +10,7 @@ HTML-like templates with modern control-flow syntax.
 
 Its core purpose is to make this authoring style:
 
-```flow
+```text
 <section>
   <h1>{{ ctx.title }}</h1>
 
@@ -122,7 +122,7 @@ Standalone `.flow` files are the canonical format.
 
 Example:
 
-```flow
+```text
 <main>
   <h1>{{ ctx.title }}</h1>
 
@@ -150,7 +150,7 @@ The first embedded target is Astro.
 
 Target authoring experience:
 
-```astro
+```text
 ---
 const context = {
   title: "Inventory",
@@ -193,7 +193,7 @@ documented and tested.
 
 Syntax:
 
-```flow
+```text
 {{ expression }}
 ```
 
@@ -207,7 +207,7 @@ Required behavior:
 
 Syntax:
 
-```flow
+```text
 @if (condition) {
   ...
 } @else if (condition) {
@@ -226,7 +226,7 @@ Required behavior:
 
 Syntax:
 
-```flow
+```text
 @for (item of iterable; track item.id) {
   ...
 } @empty {
@@ -245,7 +245,7 @@ Required behavior:
 
 Syntax:
 
-```flow
+```text
 @switch (expression) {
   @case ("draft") {
     ...
@@ -387,7 +387,7 @@ export default {
 
 Target standalone import:
 
-```astro
+```text
 ---
 import { render } from "../templates/inventory.flow";
 
@@ -399,7 +399,7 @@ const html = render(Astro.props);
 
 Target embedded usage:
 
-```astro
+```text
 ---
 const context = Astro.props;
 ---
@@ -610,4 +610,3 @@ Use this checklist when proposing a new feature.
 
 If a feature pushes Flowmark toward being a full framework, it should be rejected
 or moved into a separate integration package.
-

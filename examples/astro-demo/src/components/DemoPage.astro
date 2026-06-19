@@ -1,6 +1,5 @@
 ---
 import { demoContext } from "../data/context";
-import Flowmark from "./Flowmark.astro";
 
 export interface Props {
   mode?: "main" | "empty";
@@ -26,7 +25,7 @@ const context = {
 ---
 
 <!-- prettier-ignore -->
-<Flowmark context={context} is:raw>
+<template flowmark context={context}>
   <header class="hero-panel">
     <div class="page-frame grid gap-8 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
       <div class="max-w-3xl">
@@ -102,7 +101,7 @@ const context = {
             <h2 class="mt-4 text-2xl font-bold text-foreground">Flowmark inside Astro</h2>
             <p class="mt-3 text-muted-foreground">
               This page uses a real Flowmark template inside a .astro component.
-              Astro passes the raw slot to Flowmark, and Flowmark renders it on the server.
+              The Astro integration compiles it before Astro parses the page.
             </p>
           </div>
           <div class="grid gap-3 text-sm">
@@ -176,4 +175,4 @@ const context = {
       </and-card>
     </section>
   </main>
-</Flowmark>
+</template>

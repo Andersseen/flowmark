@@ -21,9 +21,11 @@
     "astro": "^5.7.10"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4.3.1",
     "tailwindcss": "^4.3.1",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.6"
   }
 }

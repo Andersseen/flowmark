@@ -1,9 +1,11 @@
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { Plugin } from "vite";
 
 export interface FlowmarkViteOptions {
   runtimeImport?: string;
-  /** Path to the prebuilt `flowmark` CLI. Defaults to `flowmark` on PATH. */
+  /** Optional path to a custom `flowmark` CLI binary. */
   compilerPath?: string;
 }
 
@@ -11,12 +13,12 @@ export interface FlowmarkCompileRequest {
   filename: string;
   lineOffset?: number;
   runtimeImport: string;
-  compilerPath: string;
+  compilerPath?: string;
 }
 
 export default function flowmark(options: FlowmarkViteOptions = {}): Plugin {
   const runtimeImport = options.runtimeImport ?? "@flowmark/runtime";
-  const compilerPath = options.compilerPath ?? "flowmark";
+  const compilerPath = resolveCompilerPath(options.compilerPath);
 
   return {
     name: "@flowmark/vite",
@@ -42,9 +44,11 @@ export function compileFlowmark(
   source: string,
   request: FlowmarkCompileRequest,
 ): string {
+  const compilerPath = resolveCompilerPath(request.compilerPath);
+
   try {
     return execFileSync(
-      request.compilerPath,
+      compilerPath,
       [
         "compile",
         "-",
@@ -62,6 +66,18 @@ export function compileFlowmark(
       },
     );
   } catch (error) {
+    if (
+      error instanceof Error &&
+      "code" in error &&
+      (error as NodeJS.ErrnoException).code === "ENOENT"
+    ) {
+      throw new Error(
+        `Flowmark compiler was not found at "${compilerPath}". ` +
+          "Install the Flowmark CLI, run `cargo build --workspace` in the monorepo, " +
+          "or provide compilerPath explicitly.",
+      );
+    }
+
     const message =
       error instanceof Error && "stderr" in error
         ? String((error as Error & { stderr?: Buffer | string }).stderr)
@@ -70,6 +86,28 @@ export function compileFlowmark(
       `Failed to compile Flowmark template ${request.filename}\n${message}`,
     );
   }
+}
+
+/** Resolve the compiler automatically for normal usage and monorepo development. */
+export function resolveCompilerPath(compilerPath?: string): string {
+  if (compilerPath) return compilerPath;
+  if (process.env.FLOWMARK_COMPILER_PATH) {
+    return process.env.FLOWMARK_COMPILER_PATH;
+  }
+
+  const executable = process.platform === "win32" ? "flowmark.exe" : "flowmark";
+  const workspaceCandidates = [
+    fileURLToPath(
+      new URL(`../../../target/debug/${executable}`, import.meta.url),
+    ),
+    fileURLToPath(
+      new URL(`../../../target/release/${executable}`, import.meta.url),
+    ),
+  ];
+
+  return (
+    workspaceCandidates.find((candidate) => existsSync(candidate)) ?? executable
+  );
 }
 
 function stripQuery(id: string): string {

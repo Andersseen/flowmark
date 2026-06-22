@@ -84,6 +84,19 @@ Astro from interpreting Flowmark expressions as TSX before the Vite integration
 runs. The Flowmark integration replaces the whole template during compilation,
 so the marker does not affect generated HTML.
 
+## Local development
+
+From the monorepo root, open the Astro demo in a new VS Code Extension
+Development Host with the local extension loaded:
+
+```bash
+pnpm run dev:vscode
+```
+
+You can also press `F5` in the monorepo workspace and select **Run Flowmark
+Extension**. In the new window, open `DemoPage.astro` or a `.flow` file to test
+highlighting and type `flowmark` inside an Astro file to test the snippet.
+
 ## Installation from a VSIX
 
 Build the extension from the monorepo root:
@@ -101,10 +114,11 @@ code --install-extension packages/vscode-flowmark/dist/flowmark-language-support
 
 ## Packaging scripts
 
-| Script                                                  | Description                  |
-| ------------------------------------------------------- | ---------------------------- |
-| `pnpm --filter vscode-flowmark run package`             | Build a release `.vsix`.     |
-| `pnpm --filter vscode-flowmark run package:pre-release` | Build a pre-release `.vsix`. |
+| Script                                                  | Description                   |
+| ------------------------------------------------------- | ----------------------------- |
+| `pnpm run dev:vscode`                                   | Open the local dev extension. |
+| `pnpm --filter vscode-flowmark run package`             | Build a release `.vsix`.      |
+| `pnpm --filter vscode-flowmark run package:pre-release` | Build a pre-release `.vsix`.  |
 
 ## License
 

@@ -172,11 +172,14 @@ pnpm run build:demo
 import flowmark from "@flowmark/vite";
 
 export default {
-  plugins: [flowmark({ compilerPath: "/path/to/flowmark" })],
+  plugins: [flowmark()],
 };
 ```
 
-The plugin compiles `.flow` imports at build time using the prebuilt CLI.
+The plugin compiles `.flow` imports at build time using the prebuilt CLI. In
+the monorepo it discovers the local Rust binary automatically; installed usage
+resolves `flowmark` from `PATH`. `compilerPath` remains available as an advanced
+override.
 
 ## Test
 
@@ -226,9 +229,9 @@ The integration transforms embedded Flowmark templates before Astro parses the
 page. `is:raw` is included in the recommended Astro authoring form so Astro's
 Language Server treats the custom syntax as inert; the Flowmark integration
 replaces the entire element before the application build. The integration
-invokes a prebuilt `flowmark` CLI from `PATH`; pass
-`flowmark({ compilerPath: "/path/to/flowmark" })` when the binary lives
-elsewhere. The integration never runs Cargo and sends templates over stdin, so
+discovers the monorepo compiler automatically and otherwise uses the prebuilt
+`flowmark` CLI from `PATH`. `compilerPath` is only needed as an advanced
+override. The integration never runs Cargo and sends templates over stdin, so
 it does not create temporary source files.
 
 ## Editor Support

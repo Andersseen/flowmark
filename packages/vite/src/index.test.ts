@@ -1,12 +1,16 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { compileFlowmark } from "./index";
+import { compileFlowmark, resolveCompilerPath } from "./index";
 
 const compilerPath = fileURLToPath(
   new URL("../../../target/debug/flowmark", import.meta.url),
 );
 
 describe("compileFlowmark", () => {
+  it("discovers the workspace compiler without configuration", () => {
+    expect(resolveCompilerPath()).toBe(compilerPath);
+  });
+
   it("compiles stdin without temporary files", () => {
     const code = compileFlowmark("<p>Hello {{ context.name }}</p>", {
       filename: "greeting.flow",

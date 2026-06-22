@@ -26,6 +26,17 @@ const grammarPaths = new Map([
     "source.flowmark",
     path.join(packageRoot, "syntaxes/flowmark.tmLanguage.json"),
   ],
+  [
+    "flowmark.astro.injection",
+    path.join(packageRoot, "syntaxes/flowmark-astro-injection.tmLanguage.json"),
+  ],
+  [
+    "flowmark.astro.raw.injection",
+    path.join(
+      packageRoot,
+      "syntaxes/flowmark-astro-raw-injection.tmLanguage.json",
+    ),
+  ],
 ]);
 
 const registry = new Registry({
@@ -52,15 +63,15 @@ const grammar = await registry.loadGrammar("source.flowmark");
 assert.ok(grammar, "Flowmark grammar must load");
 
 const samples = [
-  "@if (ctx.visible) {",
-  "} @else if (ctx.pending) {",
+  "@if (context.visible) {",
+  "} @else if (context.pending) {",
   "} @else {",
-  "@for (product of ctx.products; track product.id) {",
+  "@for (product of context.products; track product.id) {",
   "} @empty {",
   "@switch (product.status) {",
   "@case ('available') {",
   "@default {",
-  "<h1>{{ ctx.title }}</h1>",
+  "<h1>{{ context.title }}</h1>",
 ];
 
 const scopes = samples.flatMap((line) =>
@@ -111,3 +122,98 @@ assert.doesNotMatch(
 );
 
 console.log("Flowmark TextMate grammar checks passed.");
+
+const astroRegistry = new Registry({
+  onigLib: Promise.resolve({
+    createOnigScanner: (patterns) => new OnigScanner(patterns),
+    createOnigString: (value) => new OnigString(value),
+  }),
+  getInjections(scopeName) {
+    return scopeName === "source.astro"
+      ? ["flowmark.astro.injection", "flowmark.astro.raw.injection"]
+      : undefined;
+  },
+  async loadGrammar(scopeName) {
+    const grammarPath = grammarPaths.get(scopeName);
+    if (grammarPath !== undefined) {
+      return parseRawGrammar(
+        await fs.readFile(grammarPath, "utf8"),
+        grammarPath,
+      );
+    }
+
+    if (scopeName === "source.astro") {
+      if (process.env.ASTRO_GRAMMAR_PATH) {
+        return parseRawGrammar(
+          await fs.readFile(process.env.ASTRO_GRAMMAR_PATH, "utf8"),
+          process.env.ASTRO_GRAMMAR_PATH,
+        );
+      }
+
+      return parseRawGrammar(
+        JSON.stringify({
+          scopeName,
+          patterns: [
+            {
+              begin: "<([^/?!\\s<>]+)(?=[^>]+is:raw).*?",
+              end: "</\\1\\s*>|/>",
+              name: "meta.scope.tag.$1.astro meta.raw.astro",
+              contentName: "source.unknown",
+            },
+          ],
+        }),
+        `${scopeName}.json`,
+      );
+    }
+
+    if (
+      scopeName === "source.js" ||
+      scopeName === "source.unknown" ||
+      scopeName === "text.html.basic"
+    ) {
+      return parseRawGrammar(
+        JSON.stringify({ scopeName, patterns: [] }),
+        `${scopeName}.json`,
+      );
+    }
+
+    return null;
+  },
+});
+
+const astroGrammar = await astroRegistry.loadGrammar("source.astro");
+assert.ok(astroGrammar, "Astro host grammar must load");
+
+let ruleStack = null;
+const embeddedLines = [
+  "<template flowmark is:raw context={context}>",
+  "  <h1>{{ context.title }}</h1>",
+  "  @if (context.visible) {",
+  "    <span>{{ context.label }}</span>",
+  "  } @else {",
+  "    <span>Hidden</span>",
+  "  }",
+  "</template>",
+];
+const embeddedScopes = [];
+
+for (const line of embeddedLines) {
+  const result = astroGrammar.tokenizeLine(line, ruleStack);
+  ruleStack = result.ruleStack;
+  embeddedScopes.push(...result.tokens.flatMap((token) => token.scopes));
+}
+
+assert.ok(
+  embeddedScopes.includes("meta.embedded.flowmark"),
+  "Astro template contents must enter the Flowmark embedded scope",
+);
+assert.ok(
+  embeddedScopes.includes("keyword.control.flowmark"),
+  "Flowmark keywords inside Astro must receive keyword scopes",
+);
+assert.ok(
+  embeddedScopes.includes("meta.interpolation.flowmark"),
+  "Flowmark interpolations inside Astro must receive embedded scopes",
+);
+
+console.log("Flowmark Astro injection checks passed.");

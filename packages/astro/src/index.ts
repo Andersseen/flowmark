@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import flowmarkVite, {
   compileFlowmark,
+  resolveCompilerPath,
   type FlowmarkViteOptions,
 } from "@flowmark/vite";
 import type { AstroIntegration } from "astro";
@@ -44,7 +45,7 @@ export default function flowmark(
 
 function flowmarkAstroPlugin(options: FlowmarkAstroOptions): Plugin {
   const runtimeImport = options.runtimeImport ?? "@flowmark/runtime";
-  const compilerPath = options.compilerPath ?? "flowmark";
+  const compilerPath = resolveCompilerPath(options.compilerPath);
   const virtualModules = new Map<string, VirtualTemplate>();
   const virtualIdsByFile = new Map<string, Set<string>>();
 

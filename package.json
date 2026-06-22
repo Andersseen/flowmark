@@ -42,6 +42,7 @@
     "format:rust": "cargo fmt --all",
     "format:ts": "prettier --write --no-error-on-unmatched-pattern \"**/*.{astro,css,js,json,md,mjs,ts,yml,yaml}\"",
     "compile:example": "cargo run -p flowmark-cli -- compile examples/basic/for.flow",
+    "dev:vscode": "code --new-window --extensionDevelopmentPath=packages/vscode-flowmark examples/astro-demo",
     "demo": "pnpm run build:rust && pnpm run build:runtime && pnpm run build:vite && pnpm run build:astro && pnpm --filter @flowmark/astro-demo dev",
     "build:demo": "pnpm run build:rust && pnpm run build:runtime && pnpm run build:vite && pnpm run build:astro && pnpm --filter @flowmark/astro-demo run build",
     "deploy:demo": "pnpm run build:demo && pnpm exec wrangler pages deploy examples/astro-demo/dist --project-name=flowmark-demo"

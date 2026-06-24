@@ -1,0 +1,30 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+import type { SyntaxShowcaseContext } from "../data/types";
+
+export interface Props {
+  context: SyntaxShowcaseContext;
+}
+
+const { context } = Astro.props;
+---
+
+<section class="page-frame py-16" aria-labelledby="syntax-heading">
+  <div class="text-center">
+    <h2 id="syntax-heading" class="text-3xl font-bold text-foreground">
+      Familiar syntax
+    </h2>
+    <p class="mt-2 text-muted-foreground">
+      Control flow that reads like the host language you already know.
+    </p>
+  </div>
+  <div class="mt-10 grid gap-6 lg:grid-cols-3">
+    {
+      context.examples.map((example) => (
+        <CodeBlock title={example.label} language="flowmark">
+          {example.code}
+        </CodeBlock>
+      ))
+    }
+  </div>
+</section>

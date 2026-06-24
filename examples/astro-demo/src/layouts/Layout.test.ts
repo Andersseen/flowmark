@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import Layout from "./Layout.astro";
 
 describe("Layout", () => {
-  it("renders document chrome, SEO tags, and registers web components", async () => {
+  it("renders document chrome, SEO tags, accessibility hooks, and registers web components", async () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(Layout, {
       props: {
@@ -21,6 +21,10 @@ describe("Layout", () => {
       'name="description" content="Unit test description"',
     );
     expect(html).toContain('property="og:title" content="Flowmark Test"');
+    expect(html).toContain('rel="canonical" href="https://test.example/"');
+    expect(html).toContain('rel="icon" type="image/svg+xml" href="/favicon.svg"');
+    expect(html).toContain("Skip to content");
+    expect(html).toContain('id="main-content"');
     expect(html).toContain("<and-navbar");
     expect(html).toContain("Flowmark");
     expect(html).toContain("Page content");

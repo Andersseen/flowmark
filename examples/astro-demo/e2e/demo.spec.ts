@@ -17,7 +17,7 @@ test("renders the Flowmark landing page", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Live demo" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Get started" })).toBeVisible();
   await expect(page.getByText("npm install @flowmark/astro @flowmark/runtime")).toBeVisible();
-  await expect(page.getByRole("contentinfo")).toContainText("Flowmark");
+  await expect(page.locator("footer")).toContainText("Flowmark");
 });
 
 test("renders the @empty branch page", async ({ page }) => {

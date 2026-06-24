@@ -169,26 +169,29 @@ Create in `src/data/`:
 ## Phase 4 — Updated unit and E2E tests
 
 ### Deliverables
-- [ ] Update existing tests (`CodeBlock.test.ts`, `Layout.test.ts`).
-- [ ] Add Astro Container tests for new components.
-- [ ] Update `e2e/demo.spec.ts` for the new landing page.
-- [ ] Add security/escaping tests if more templates are added.
+- [x] Update existing tests (`CodeBlock.test.ts`, `Layout.test.ts`).
+- [x] Add Astro Container tests for new components.
+- [x] Update `e2e/demo.spec.ts` for the new landing page.
+- [x] Add security/escaping tests for the new Flowmark templates.
 
-### Minimum unit tests
-- `Hero.test.ts` — renders title and CTAs.
-- `Features.test.ts` — renders feature list.
-- `SyntaxShowcase.test.ts` — renders default example.
-- `Footer.test.ts` — renders links.
+### Unit tests added
+- `Hero.test.ts` — renders title, tagline, badge, CTAs, and skips secondary CTA when absent.
+- `Features.test.ts` — renders feature list and escapes interpolated HTML.
+- `SyntaxShowcase.test.ts` — renders examples and `@switch` badges.
+- `GettingStarted.test.ts` — renders steps, code blocks, and language badges.
+- `Footer.test.ts` — renders brand, links, and copyright.
 
-### Minimum E2E tests
-- Hero loads.
-- Features render.
-- Syntax showcase displays examples.
-- CTAs point to correct URLs.
+### E2E coverage
+- Hero loads with title, tagline, and CTA.
+- Features section renders.
+- Syntax showcase displays `@for` example.
+- Getting Started section displays install command.
+- Footer is present.
+- Existing pages (`/empty`, `/attention`, `/security`, `/inline`) keep working.
 
 ### Acceptance criteria
-- [ ] `pnpm test` passes.
-- [ ] `pnpm run test:e2e` passes (or equivalent script).
+- [x] `pnpm test` passes.
+- [x] `pnpm run test:e2e` passes (or equivalent script).
 
 ---
 

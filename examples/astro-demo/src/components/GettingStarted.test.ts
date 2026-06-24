@@ -1,0 +1,38 @@
+import { experimental_AstroContainer as AstroContainer } from "astro/container";
+import { describe, expect, it } from "vitest";
+import GettingStarted from "./GettingStarted.astro";
+
+describe("GettingStarted", () => {
+  it("renders steps with code blocks and language badges", async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(GettingStarted, {
+      props: {
+        context: {
+          title: "Get started",
+          description: "Add Flowmark to your project.",
+          steps: [
+            {
+              label: "Install",
+              code: "npm install @flowmark/astro",
+              description: "Install the package.",
+            },
+            {
+              label: "Configure",
+              code: "integrations: [flowmark()]",
+              description: "Add the integration.",
+            },
+          ],
+        },
+      },
+    });
+
+    expect(html).toContain("Get started");
+    expect(html).toContain("Add Flowmark to your project.");
+    expect(html).toContain("Install");
+    expect(html).toContain("npm install @flowmark/astro");
+    expect(html).toContain("Configure");
+    expect(html).toContain("integrations: [flowmark()]");
+    expect(html).toContain("bash");
+    expect(html).toContain("astro");
+  });
+});

@@ -1,24 +1,37 @@
 ---
-import FeatureCard from "./FeatureCard.astro";
+import { featuresContext } from "../data/features";
 import type { FeaturesContext } from "../data/types";
 
 export interface Props {
-  context: FeaturesContext;
+  context?: FeaturesContext;
 }
 
-const { context } = Astro.props;
+const { context = featuresContext } = Astro.props;
 ---
 
-<section class="page-frame py-16" aria-labelledby="features-heading">
-  <div class="text-center">
-    <h2 id="features-heading" class="text-3xl font-bold text-foreground">
-      Why Flowmark?
-    </h2>
-    <p class="mt-2 text-muted-foreground">
-      A template language designed for clarity and performance.
-    </p>
-  </div>
-  <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-    {context.items.map((feature) => <FeatureCard feature={feature} />)}
-  </div>
-</section>
+<!-- prettier-ignore -->
+<template flowmark is:raw context={context}>
+  <section class="page-frame py-16" aria-labelledby="features-heading">
+    <div class="text-center">
+      <h2 id="features-heading" class="text-3xl font-bold text-foreground">
+        Why Flowmark?
+      </h2>
+      <p class="mt-2 text-muted-foreground">
+        A template language designed for clarity and performance.
+      </p>
+    </div>
+    <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      @for (feature of context.items; track feature.id) {
+        <and-card variant="outline" padded class="block h-full">
+          <div class="grid gap-3">
+            @if (feature.badge) {
+              <and-badge variant="secondary">{{ feature.badge }}</and-badge>
+            }
+            <h3 class="text-xl font-bold text-foreground">{{ feature.title }}</h3>
+            <p class="text-muted-foreground">{{ feature.description }}</p>
+          </div>
+        </and-card>
+      }
+    </div>
+  </section>
+</template>

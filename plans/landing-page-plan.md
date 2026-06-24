@@ -70,11 +70,13 @@ Create in `src/data/`:
 ## Phase 2 — Real Flowmark usage on the landing page
 
 ### Deliverables
-- [ ] Render Hero with Flowmark using `context`.
-- [ ] Render Features with `@for` and `@if`.
-- [ ] Render Syntax Showcase with `@switch`.
-- [ ] Render Live Demo with real project data.
-- [ ] Ensure every template uses `<!-- prettier-ignore -->` + `<template flowmark is:raw>`.
+- [x] Render Hero with Flowmark using `context`.
+- [x] Render Features with `@for` and `@if`.
+- [x] Render Syntax Showcase with `@switch`.
+- [x] Render Getting Started with `@for` and `@if`.
+- [x] Render Footer with `@for` and `@if`.
+- [ ] Render Live Demo with real project data. *(kept existing inventory dashboard; can be revisited)*
+- [x] Ensure every template uses `<!-- prettier-ignore -->` + `<template flowmark is:raw>`.
 
 ### Templates to implement
 
@@ -137,10 +139,10 @@ Create in `src/data/`:
 ```
 
 ### Acceptance criteria
-- [ ] At least 3 main sections use Flowmark.
-- [ ] Templates use `@if`, `@for`, and `@switch`.
-- [ ] Output HTML is correct and accessible.
-- [ ] Build does not break (`pnpm run build`).
+- [x] At least 3 main sections use Flowmark.
+- [x] Templates use `@if`, `@for`, and `@switch`.
+- [x] Output HTML is correct and accessible.
+- [x] Build does not break (`pnpm run build`).
 
 ---
 

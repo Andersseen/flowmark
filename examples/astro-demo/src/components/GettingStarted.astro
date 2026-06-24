@@ -1,44 +1,50 @@
 ---
-import CodeBlock from "./CodeBlock.astro";
+import { gettingStartedContext } from "../data/gettingStarted";
 import type { GettingStartedContext } from "../data/types";
 
 export interface Props {
-  context: GettingStartedContext;
+  context?: GettingStartedContext;
 }
 
-const { context } = Astro.props;
+const { context = gettingStartedContext } = Astro.props;
 ---
 
-<section
-  id="getting-started"
-  class="page-frame py-16"
-  aria-labelledby="getting-started-heading"
->
-  <div class="text-center">
-    <h2 id="getting-started-heading" class="text-3xl font-bold text-foreground">
-      {context.title}
-    </h2>
-    <p class="mt-2 text-muted-foreground">{context.description}</p>
-  </div>
-  <div class="mt-10 grid gap-6 lg:grid-cols-3">
-    {
-      context.steps.map((step, index) => (
+<!-- prettier-ignore -->
+<template flowmark is:raw context={context}>
+  <section id="getting-started" class="page-frame py-16" aria-labelledby="getting-started-heading">
+    <div class="text-center">
+      <h2 id="getting-started-heading" class="text-3xl font-bold text-foreground">
+        {{ context.title }}
+      </h2>
+      <p class="mt-2 text-muted-foreground">{{ context.description }}</p>
+    </div>
+    <div class="mt-10 grid gap-6 lg:grid-cols-3">
+      @for (step of context.steps; track step.label) {
         <div class="grid gap-3">
           <div class="flex items-center gap-3">
             <span class="grid size-8 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              {index + 1}
+              {{ context.steps.indexOf(step) + 1 }}
             </span>
-            <h3 class="text-lg font-bold text-foreground">{step.label}</h3>
+            <h3 class="text-lg font-bold text-foreground">{{ step.label }}</h3>
           </div>
-          <p class="text-muted-foreground">{step.description}</p>
-          <CodeBlock
-            title={step.label}
-            language={step.label === "Install" ? "bash" : "astro"}
-          >
-            {step.code}
-          </CodeBlock>
+          <p class="text-muted-foreground">{{ step.description }}</p>
+          <and-card variant="outline" class="block h-full overflow-hidden">
+            <and-card-header>
+              <div class="flex items-center justify-between gap-3">
+                <and-card-title>{{ step.label }}</and-card-title>
+                @if (step.label === 'Install') {
+                  <and-badge variant="secondary">bash</and-badge>
+                } @else {
+                  <and-badge variant="secondary">astro</and-badge>
+                }
+              </div>
+            </and-card-header>
+            <and-card-content>
+              <pre class="max-h-[560px] overflow-auto rounded-md bg-primary p-4 text-[0.82rem] leading-6 text-primary-foreground"><code>{{ step.code }}</code></pre>
+            </and-card-content>
+          </and-card>
         </div>
-      ))
-    }
-  </div>
-</section>
+      }
+    </div>
+  </section>
+</template>

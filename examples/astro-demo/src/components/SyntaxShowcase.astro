@@ -1,30 +1,50 @@
 ---
-import CodeBlock from "./CodeBlock.astro";
+import { syntaxContext } from "../data/syntaxExamples";
 import type { SyntaxShowcaseContext } from "../data/types";
 
 export interface Props {
-  context: SyntaxShowcaseContext;
+  context?: SyntaxShowcaseContext;
 }
 
-const { context } = Astro.props;
+const { context = syntaxContext } = Astro.props;
 ---
 
-<section class="page-frame py-16" aria-labelledby="syntax-heading">
-  <div class="text-center">
-    <h2 id="syntax-heading" class="text-3xl font-bold text-foreground">
-      Familiar syntax
-    </h2>
-    <p class="mt-2 text-muted-foreground">
-      Control flow that reads like the host language you already know.
-    </p>
-  </div>
-  <div class="mt-10 grid gap-6 lg:grid-cols-3">
-    {
-      context.examples.map((example) => (
-        <CodeBlock title={example.label} language="flowmark">
-          {example.code}
-        </CodeBlock>
-      ))
-    }
-  </div>
-</section>
+<!-- prettier-ignore -->
+<template flowmark is:raw context={context}>
+  <section class="page-frame py-16" aria-labelledby="syntax-heading">
+    <div class="text-center">
+      <h2 id="syntax-heading" class="text-3xl font-bold text-foreground">
+        Familiar syntax
+      </h2>
+      <p class="mt-2 text-muted-foreground">
+        Control flow that reads like the host language you already know.
+      </p>
+    </div>
+    <div class="mt-10 grid gap-6 lg:grid-cols-3">
+      @for (example of context.examples; track example.id) {
+        <and-card variant="outline" class="block h-full overflow-hidden">
+          <and-card-header>
+            <div class="flex items-center justify-between gap-3">
+              <and-card-title>{{ example.label }}</and-card-title>
+              @switch (example.id) {
+                @case ('for') {
+                  <and-badge variant="secondary">loop</and-badge>
+                }
+                @case ('if') {
+                  <and-badge variant="secondary">branch</and-badge>
+                }
+                @default {
+                  <and-badge variant="secondary">match</and-badge>
+                }
+              }
+            </div>
+          </and-card-header>
+          <and-card-content>
+            <pre class="max-h-[560px] overflow-auto rounded-md bg-primary p-4 text-[0.82rem] leading-6 text-primary-foreground"><code>{{ example.code }}</code></pre>
+            <p class="mt-3 text-sm text-muted-foreground">{{ example.description }}</p>
+          </and-card-content>
+        </and-card>
+      }
+    </div>
+  </section>
+</template>

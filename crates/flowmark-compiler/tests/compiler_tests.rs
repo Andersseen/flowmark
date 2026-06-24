@@ -50,7 +50,11 @@ fn multiple_interpolations() {
 #[test]
 fn preserves_significant_space_before_interpolation() {
     let output = compile_source("<p>Hello {{ context.name }}</p>");
-    assert!(output.contains("output += '<p>Hello ';"));
+    assert!(output.contains("output += '<p';"));
+    assert!(output.contains("output += '>';"));
+    assert!(output.contains("output += 'Hello ';"));
+    assert!(output.contains("renderValue(context.name)"));
+    assert!(output.contains("output += '</p>';"));
 }
 
 #[test]
@@ -460,3 +464,137 @@ fn text_that_is_invalid_inside_javascript_strings_is_escaped() {
 
     assert!(output.contains("first\\u0000second\\u2028third\\u2029fourth"));
 }
+
+#[test]
+fn empty_source_compiles_to_empty_render_function() {
+    let output = compile_source("");
+    assert!(output.contains("export function render(context)"));
+    assert!(output.contains("let output = '';"));
+    assert!(output.contains("return output;"));
+}
+
+#[test]
+fn unicode_characters_are_preserved() {
+    let output = compile_source("<p>Hellø 🌍</p>");
+    assert!(output.contains("Hellø 🌍"));
+}
+
+#[test]
+fn ast_models_html_elements_and_attributes() {
+    use flowmark_compiler::ast::{Attribute, ElementNode, Node};
+    use flowmark_compiler::parse_ast;
+
+    let root = parse_ast("<div class=\"card\" id='main' data-active></div>").unwrap();
+    assert_eq!(root.children.len(), 1);
+
+    let Node::Element(ElementNode { tag, attributes, .. }) = &root.children[0] else {
+        panic!("expected an element node");
+    };
+
+    assert_eq!(tag, "div");
+    assert_eq!(attributes.len(), 3);
+
+    let Attribute::Plain(class) = &attributes[0] else {
+        panic!("expected plain attribute");
+    };
+    assert_eq!(class.name, "class");
+    assert_eq!(class.value.as_deref(), Some("card"));
+
+    let Attribute::Plain(id) = &attributes[1] else {
+        panic!("expected plain attribute");
+    };
+    assert_eq!(id.name, "id");
+    assert_eq!(id.value.as_deref(), Some("main"));
+
+    let Attribute::Plain(active) = &attributes[2] else {
+        panic!("expected plain attribute");
+    };
+    assert_eq!(active.name, "data-active");
+    assert_eq!(active.value, None);
+}
+
+#[test]
+fn ast_dynamic_attribute_is_recognized() {
+    use flowmark_compiler::ast::{Attribute, DynamicAttribute, ElementNode, Node};
+    use flowmark_compiler::parse_ast;
+
+    let root = parse_ast("<div class=\"{{ context.css }}\"></div>").unwrap();
+    let Node::Element(ElementNode { attributes, .. }) = &root.children[0] else {
+        panic!("expected an element node");
+    };
+
+    assert_eq!(attributes.len(), 1);
+    let Attribute::Dynamic(DynamicAttribute { name, expression, .. }) = &attributes[0] else {
+        panic!("expected dynamic attribute");
+    };
+    assert_eq!(name, "class");
+    assert_eq!(expression, "context.css");
+}
+
+#[test]
+fn diagnostic_contains_precise_span_and_code() {
+    let diagnostics = compile("@if () {}", CompileOptions::new("@flowmark/runtime"))
+        .err()
+        .unwrap();
+
+    assert!(
+        diagnostics.iter().any(|d| d.code == Some("FM0007".to_string())),
+        "expected empty expression code"
+    );
+    assert!(
+        diagnostics.iter().any(|d| d.start == 4 && d.end == 5),
+        "expected diagnostic to point inside empty parentheses"
+    );
+}
+
+#[test]
+fn malformed_html_reports_error() {
+    let errors = expect_error("<div>text</span>");
+    assert!(errors.iter().any(|m| m.contains("Expected closing tag") || m.contains("Unexpected")));
+}
+
+#[test]
+fn unclosed_tag_reports_error() {
+    let errors = expect_error("<div><span>text");
+    assert!(errors.iter().any(|m| m.contains("Unclosed tag") || m.contains("Expected closing tag")));
+}
+
+#[test]
+fn diagnostic_formatter_outputs_human_and_json() {
+    use flowmark_compiler::{DiagnosticFormatter, DiagnosticSeverity};
+
+    let filename = "test.flow";
+    let diagnostics = vec![flowmark_compiler::diagnostics::Diagnostic::new(
+        "example error",
+        2,
+        5,
+        10,
+        15,
+    )
+    .with_code("FM9999")
+    .with_severity(DiagnosticSeverity::Error)];
+
+    let formatter = DiagnosticFormatter::new(&diagnostics, filename, 0);
+    let human = formatter.format_human();
+    assert!(human.contains("test.flow:2:5"));
+    assert!(human.contains("FM9999"));
+    assert!(human.contains("example error"));
+
+    let json = formatter.format_json();
+    assert!(json.contains(filename));
+    assert!(json.contains("FM9999"));
+    assert!(json.contains("example error"));
+}
+
+#[test]
+fn ast_serializes_to_json() {
+    use flowmark_compiler::parse_ast;
+
+    let root = parse_ast("<p>{{ context.name }}</p>").unwrap();
+    let json = serde_json::to_string(&root).unwrap();
+    assert!(json.contains("\"type\":\"Element\""));
+    assert!(json.contains("\"tag\":\"p\""));
+    assert!(json.contains("\"type\":\"Interpolation\""));
+    assert!(json.contains("\"expression\":\"context.name\""));
+}
+

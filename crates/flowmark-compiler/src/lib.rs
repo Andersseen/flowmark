@@ -6,7 +6,8 @@ mod javascript;
 pub mod parser;
 
 use diagnostics::Diagnostic;
-pub use diagnostics::DiagnosticSeverity;
+pub use cursor::CursorPosition;
+pub use diagnostics::{DiagnosticCode, DiagnosticFormatter, DiagnosticSeverity};
 
 /// Options that control code generation.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,4 +41,9 @@ pub fn compile(source: &str, options: CompileOptions) -> Result<CompileOutput, V
     let root = parser::parse(source)?;
     let code = codegen::generate(&root, &options);
     Ok(CompileOutput { code })
+}
+
+/// Parse a Flowmark template into its AST without generating code.
+pub fn parse_ast(source: &str) -> Result<ast::RootNode, Vec<Diagnostic>> {
+    parser::parse(source)
 }

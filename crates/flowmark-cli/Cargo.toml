@@ -12,3 +12,6 @@ path = "src/main.rs"
 flowmark-compiler = { path = "../flowmark-compiler" }
 clap = { version = "4.5", features = ["derive"] }
 serde_json = "1.0"
+
+[dev-dependencies]
+assert_cmd = "2.0"

@@ -82,4 +82,33 @@ impl<'a> Cursor<'a> {
     pub fn span_text(&self, start: usize, end: usize) -> &'a str {
         self.slice(start, end)
     }
+
+    /// Capture a snapshot of the current position for precise diagnostics.
+    pub fn snapshot(&self) -> CursorPosition {
+        CursorPosition {
+            position: self.position,
+            line: self.line,
+            column: self.column,
+        }
+    }
+
+    /// Skip ASCII and Unicode whitespace without consuming anything else.
+    pub fn skip_whitespace(&mut self) {
+        while let Some(ch) = self.current() {
+            if ch.is_whitespace() {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+/// Immutable snapshot of a cursor position, typically captured at the start of a
+/// token so diagnostics can report the exact offending location.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CursorPosition {
+    pub position: usize,
+    pub line: usize,
+    pub column: usize,
 }

@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use flowmark_compiler::{compile, CompileOptions, DiagnosticSeverity};
+use flowmark_compiler::{compile, CompileOptions, DiagnosticFormatter};
 use std::{
     fs,
     io::{self, Read},
@@ -10,6 +10,7 @@ use std::{
 #[derive(Parser)]
 #[command(name = "flowmark")]
 #[command(about = "Compile Flowmark templates to JavaScript render functions")]
+#[command(version)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -120,53 +121,13 @@ fn compile_file(
             }
         }
         Err(diagnostics) => {
+            let formatter = DiagnosticFormatter::new(&diagnostics, diagnostic_name, line_offset);
             match diagnostic_format {
-                DiagnosticFormat::Human => {
-                    for diagnostic in diagnostics {
-                        let severity = severity_name(diagnostic.severity);
-                        let code = diagnostic
-                            .code
-                            .as_ref()
-                            .map(|code| format!("[{}] ", code))
-                            .unwrap_or_default();
-                        eprintln!(
-                            "{}:{}:{}: {}{}: {}",
-                            diagnostic_name,
-                            diagnostic.line + line_offset,
-                            diagnostic.column,
-                            severity,
-                            code,
-                            diagnostic.message
-                        );
-                    }
-                }
-                DiagnosticFormat::Json => {
-                    let diagnostics = diagnostics
-                        .into_iter()
-                        .map(|diagnostic| {
-                            serde_json::json!({
-                                "message": diagnostic.message,
-                                "severity": severity_name(diagnostic.severity),
-                                "code": diagnostic.code,
-                                "filename": diagnostic_name,
-                                "line": diagnostic.line + line_offset,
-                                "column": diagnostic.column,
-                                "start": diagnostic.start,
-                                "end": diagnostic.end,
-                            })
-                        })
-                        .collect::<Vec<_>>();
-                    eprintln!("{}", serde_json::json!({ "diagnostics": diagnostics }));
-                }
+                DiagnosticFormat::Human => eprint!("{}", formatter.format_human()),
+                DiagnosticFormat::Json => eprintln!("{}", formatter.format_json()),
             }
             process::exit(1);
         }
     }
 }
 
-fn severity_name(severity: DiagnosticSeverity) -> &'static str {
-    match severity {
-        DiagnosticSeverity::Error => "error",
-        DiagnosticSeverity::Warning => "warning",
-    }
-}

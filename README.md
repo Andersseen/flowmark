@@ -225,9 +225,10 @@ pnpm run test:e2e:demo
 pnpm run demo
 ```
 
-The demo uses Astro, Tailwind CSS 4, `@andersseen/web-components`, and the
-local `@flowmark/astro` integration. Inline Flowmark templates can be authored
-with the editor-compatible `<template flowmark is:raw>` wrapper:
+The demo is also the [official Flowmark landing page](examples/astro-demo/).
+It uses Astro, Tailwind CSS 4, `@andersseen/web-components`, and the local
+`@flowmark/astro` integration. Inline Flowmark templates can be authored with
+the editor-compatible `<template flowmark is:raw>` wrapper:
 
 ```text
 <template flowmark is:raw context={context}>

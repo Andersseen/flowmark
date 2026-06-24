@@ -1,0 +1,40 @@
+---
+import { footerContext } from "../data/footer";
+import type { FooterContext } from "../data/types";
+
+export interface Props {
+  context?: FooterContext;
+}
+
+const { context = footerContext } = Astro.props;
+---
+
+<!-- prettier-ignore -->
+<template flowmark is:raw context={context}>
+  <footer class="border-t border-border bg-card">
+    <div class="page-frame flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="font-bold text-foreground">{{ context.brand }}</p>
+        <p class="text-sm text-muted-foreground">{{ context.tagline }}</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul class="flex flex-wrap gap-4 text-sm">
+          @for (link of context.links; track link.label) {
+            <li>
+              @if (link.external) {
+                <a href="{{ link.href }}" target="_blank" class="font-medium text-foreground hover:underline">
+                  {{ link.label }}
+                </a>
+              } @else {
+                <a href="{{ link.href }}" class="font-medium text-foreground hover:underline">
+                  {{ link.label }}
+                </a>
+              }
+            </li>
+          }
+        </ul>
+      </nav>
+      <p class="text-sm text-muted-foreground">{{ context.copyright }}</p>
+    </div>
+  </footer>
+</template>

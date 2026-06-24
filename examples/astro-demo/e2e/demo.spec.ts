@@ -1,16 +1,23 @@
 import { expect, test } from "@playwright/test";
 
-test("renders the main Flowmark demo", async ({ page }) => {
+test("renders the Flowmark landing page", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: "Inventory Dashboard" }),
+    page.getByRole("heading", { name: "Flowmark", level: 1 }),
   ).toBeVisible();
-
-  const preview = page.locator(".flow-preview").first();
-  await expect(preview.getByText("Ergonomic Keyboard")).toBeVisible();
-  await expect(preview.getByText("In stock").first()).toBeVisible();
-  await expect(page.getByText("Product inventory")).toBeVisible();
+  await expect(
+    page.locator("header").getByText("HTML-like templates with modern control flow"),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get started" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Why Flowmark?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Modern control flow" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Familiar syntax" })).toBeVisible();
+  await expect(page.getByText("@for (product of products; track product.id)")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Live demo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Get started" })).toBeVisible();
+  await expect(page.getByText("npm install @flowmark/astro @flowmark/runtime")).toBeVisible();
+  await expect(page.locator("footer")).toContainText("Flowmark");
 });
 
 test("renders the @empty branch page", async ({ page }) => {

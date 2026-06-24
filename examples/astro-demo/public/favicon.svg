@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="hsl(222 47% 11%)" />
+  <text
+    x="50"
+    y="68"
+    font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="58"
+    font-weight="900"
+    fill="hsl(210 40% 98%)"
+    text-anchor="middle"
+  >F</text>
+</svg>

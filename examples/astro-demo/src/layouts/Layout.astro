@@ -4,17 +4,20 @@ import "../styles/global.css";
 export interface Props {
   title: string;
   description?: string;
+  siteUrl?: string;
 }
 
 const {
   title,
   description = "Flowmark compiles HTML-like templates with Angular-inspired control flow into plain JavaScript render functions.",
+  siteUrl = "https://flowmark.example",
 } = Astro.props;
 
+const canonical = new URL(Astro.url.pathname, siteUrl).toString();
+
 const navItems = JSON.stringify([
-  { id: "demo", label: "Demo", href: "/" },
-  { id: "attention", label: "Attention", href: "/attention" },
-  { id: "empty", label: "Empty state", href: "/empty" },
+  { id: "home", label: "Home", href: "/" },
+  { id: "demo", label: "Live demo", href: "#live-demo" },
   {
     id: "github",
     label: "GitHub",
@@ -25,17 +28,35 @@ const navItems = JSON.stringify([
 ---
 
 <!doctype html>
-<html lang="en" data-mode="light">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="hsl(210 20% 98%)" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="hsl(222 47% 5%)" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <script>
       import "../scripts/web-components";
     </script>
   </head>
   <body>
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+    >
+      Skip to content
+    </a>
+
     <div class="app-shell">
       <and-navbar
         class="block border-b border-border bg-background/95"
@@ -44,7 +65,7 @@ const navItems = JSON.stringify([
         position="sticky"
         active-mode="route"
         item-variant="filled"
-        aria-nav-label="Flowmark demo navigation"
+        aria-nav-label="Flowmark navigation"
       >
         <a
           slot="start"
@@ -60,21 +81,9 @@ const navItems = JSON.stringify([
         </a>
       </and-navbar>
 
-      <slot />
-
-      <footer class="border-t border-border bg-card">
-        <div
-          class="page-frame flex flex-col gap-3 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p>
-            Built with Astro, Flowmark, Tailwind 4, and Andersseen Web
-            Components.
-          </p>
-          <a class="font-medium text-foreground hover:underline" href="/"
-            >Back to demo</a
-          >
-        </div>
-      </footer>
+      <main id="main-content">
+        <slot />
+      </main>
     </div>
   </body>
 </html>

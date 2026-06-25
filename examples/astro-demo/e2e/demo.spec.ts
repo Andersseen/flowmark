@@ -7,6 +7,20 @@ test("renders the Flowmark landing page", async ({ page }) => {
     page.getByRole("heading", { name: "Flowmark", level: 1 }),
   ).toBeVisible();
   await expect(
+    page.getByRole("link", { name: "Control flow compiler" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Event compiler" }),
+  ).toBeVisible();
+});
+
+test("renders the Flowmark control flow page", async ({ page }) => {
+  await page.goto("/control-flow");
+
+  await expect(
+    page.getByRole("heading", { name: "Flowmark", level: 1 }),
+  ).toBeVisible();
+  await expect(
     page
       .locator("header")
       .getByText("HTML-like templates with modern control flow"),
@@ -34,6 +48,21 @@ test("renders the Flowmark landing page", async ({ page }) => {
     page.getByText("npm install @flowmark/astro @flowmark/runtime"),
   ).toBeVisible();
   await expect(page.locator("footer")).toContainText("Flowmark");
+});
+
+test("runs compiled event handlers", async ({ page }) => {
+  await page.goto("/events");
+
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("#event-output")).toHaveText(
+    "Saved from a click event",
+  );
+
+  await page.getByRole("button", { name: "Remove item 1" }).click();
+  await expect(page.locator("#event-output")).toHaveText(
+    "Removed item-1 with a serialized argument",
+  );
+  await expect(page.getByRole("button", { name: "Removed" })).toBeDisabled();
 });
 
 test("preserves whitespace and escapes interpolated HTML", async ({ page }) => {

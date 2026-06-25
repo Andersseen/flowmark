@@ -1,5 +1,5 @@
 export interface FlowEventHandlers {
-  [name: string]: (...args: unknown[]) => unknown;
+  [name: string]: (...args: any[]) => unknown;
 }
 
 const FLOW_EVENT_PREFIX = "data-flow-on-";
@@ -11,8 +11,23 @@ const FLOW_EVENT_MARKER = "__flow";
  */
 export function bindFlowEvents(handlers: FlowEventHandlers): void {
   if (typeof document === "undefined") return;
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => bindFlowEventsNow(document, handlers),
+      { once: true },
+    );
+    return;
+  }
 
-  for (const element of Array.from(document.querySelectorAll("*"))) {
+  bindFlowEventsNow(document, handlers);
+}
+
+function bindFlowEventsNow(
+  root: ParentNode,
+  handlers: FlowEventHandlers,
+): void {
+  for (const element of Array.from(root.querySelectorAll("*"))) {
     if (
       Array.from((element as HTMLElement).attributes).some((attribute) =>
         attribute.name.startsWith(FLOW_EVENT_PREFIX),
@@ -81,14 +96,5 @@ export function bindFlowEventsIn(
   handlers: FlowEventHandlers,
 ): void {
   if (typeof document === "undefined") return;
-
-  for (const element of Array.from(root.querySelectorAll("*"))) {
-    if (
-      Array.from((element as HTMLElement).attributes).some((attribute) =>
-        attribute.name.startsWith(FLOW_EVENT_PREFIX),
-      )
-    ) {
-      bindElement(element as HTMLElement, handlers);
-    }
-  }
+  bindFlowEventsNow(root, handlers);
 }

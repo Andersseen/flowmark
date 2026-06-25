@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileEvents, FlowmarkDomError } from "./index";
+import { compileEvents, FlowmarkDomError } from "./index.js";
 
 describe("compileEvents", () => {
   it("compiles a basic click handler", () => {
@@ -10,10 +10,10 @@ describe("compileEvents", () => {
     });
 
     expect(result.html).toContain('data-flow-on-click="save"');
-    expect(result.clientModule).toContain('import { bindFlowEvents }');
-    expect(result.clientModule).toContain('function save()');
-    expect(result.clientModule).toContain('bindFlowEvents({');
-    expect(result.clientModule).toContain('save,');
+    expect(result.clientModule).toContain("import { bindFlowEvents }");
+    expect(result.clientModule).toContain("function save()");
+    expect(result.clientModule).toContain("bindFlowEvents({");
+    expect(result.clientModule).toContain("save,");
   });
 
   it("compiles a handler with $event", () => {
@@ -27,6 +27,8 @@ describe("compileEvents", () => {
     expect(result.html).toContain(
       'data-flow-args="[{&quot;__flow&quot;:&quot;$event&quot;}]"',
     );
+    expect(result.clientModule).toContain("function save(event)");
+    expect(result.clientModule).not.toContain("event: Event");
   });
 
   it("compiles a handler with static literal arguments", () => {
@@ -38,6 +40,8 @@ describe("compileEvents", () => {
 
     expect(result.html).toContain('data-flow-on-click="removeItem"');
     expect(result.html).toContain('data-flow-args="[&quot;item-1&quot;]"');
+    expect(result.clientModule).toContain("function removeItem(id)");
+    expect(result.clientModule).not.toContain("id: string");
   });
 
   it("supports multiple handlers and events", () => {
@@ -49,8 +53,8 @@ describe("compileEvents", () => {
 
     expect(result.html).toContain('data-flow-on-click="save"');
     expect(result.html).toContain('data-flow-on-click="cancel"');
-    expect(result.clientModule).toContain('function save()');
-    expect(result.clientModule).toContain('function cancel()');
+    expect(result.clientModule).toContain("function save()");
+    expect(result.clientModule).toContain("function cancel()");
   });
 
   it("returns unchanged HTML when no event bindings exist", () => {

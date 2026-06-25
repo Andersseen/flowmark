@@ -36,6 +36,48 @@ const EVENT_ATTR_RE = /\s\(([\w-]+)\)\s*=\s*(["'])(.*?)\2/g;
 const FUNCTION_DECL_RE = /function\s+([a-zA-Z_$][\w$]*)/g;
 const IDENTIFIER_RE = /[a-zA-Z_$][\w$]*/g;
 
+const RESERVED_WORDS = new Set([
+  "as",
+  "async",
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "export",
+  "extends",
+  "finally",
+  "for",
+  "from",
+  "function",
+  "if",
+  "import",
+  "in",
+  "instanceof",
+  "let",
+  "new",
+  "of",
+  "return",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "try",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+]);
+
 const KNOWN_GLOBALS = new Set([
   "console",
   "window",
@@ -105,7 +147,8 @@ export function findEventBindings(html: string): EventBinding[] {
 export function parseHandlerExpression(expression: string): HandlerCall {
   const source = expression.trim();
   const { name, argsSource, argsStart } = parseCallShape(source);
-  const args = argsSource === "" ? [] : parseArgumentList(argsSource, argsStart);
+  const args =
+    argsSource === "" ? [] : parseArgumentList(argsSource, argsStart);
 
   return { name, args };
 }
@@ -263,7 +306,10 @@ export function extractFrontmatterFunctions(
     const start = match.index;
     let index = match.index + match[0].length;
 
-    const { parameters, end: paramsEnd } = parseParameterList(frontmatter, index);
+    const { parameters, end: paramsEnd } = parseParameterList(
+      frontmatter,
+      index,
+    );
     index = paramsEnd;
     index = skipWhitespace(frontmatter, index);
 
@@ -410,6 +456,7 @@ export function analyzeCaptures(func: FrontmatterFunction): string[] {
 
   for (const { name, index, isPropertyAccess, isDeclaration } of tokens) {
     if (locals.has(name)) continue;
+    if (RESERVED_WORDS.has(name)) continue;
     if (KNOWN_GLOBALS.has(name)) continue;
     if (isPropertyAccess) continue;
     if (isDeclaration) continue;

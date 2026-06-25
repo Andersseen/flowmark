@@ -14,10 +14,7 @@ export interface FlowmarkDomDiagnostic {
 export class FlowmarkDomError extends Error {
   readonly diagnostics: FlowmarkDomDiagnostic[];
 
-  constructor(
-    message: string,
-    diagnostics: FlowmarkDomDiagnostic[] = [],
-  ) {
+  constructor(message: string, diagnostics: FlowmarkDomDiagnostic[] = []) {
     super(message);
     this.name = "FlowmarkDomError";
     this.diagnostics = diagnostics;

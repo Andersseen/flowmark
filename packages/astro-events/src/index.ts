@@ -45,9 +45,7 @@ export default function flowmarkEvents(
   };
 }
 
-function flowmarkEventsVitePlugin(
-  options: FlowmarkAstroEventsOptions,
-): Plugin {
+function flowmarkEventsVitePlugin(options: FlowmarkAstroEventsOptions): Plugin {
   const runtimeImport = options.runtimeImport ?? "@flowmark/dom/runtime";
 
   return {
@@ -155,8 +153,8 @@ function transformAstroSource(
   }
 
   const safeModule = result.clientModule.replace(/<\/script>/gi, "<\\/script>");
-  const script = `<script type="module">\n${safeModule}\n</script>`;
-  const transformedCode = `${code.slice(0, templateStart)}${script}\n${result.html}`;
+  const script = `<script>\n${safeModule}\n</script>`;
+  const transformedCode = `${code.slice(0, templateStart)}\n${script}\n${result.html}`;
 
   return {
     code: transformedCode,
@@ -164,10 +162,12 @@ function transformAstroSource(
   };
 }
 
-function findFrontmatter(ast: AstroNode): {
-  value: string;
-  position: { end: { offset: number } };
-} | undefined {
+function findFrontmatter(ast: AstroNode):
+  | {
+      value: string;
+      position: { end: { offset: number } };
+    }
+  | undefined {
   if (ast.type !== "root" || !("children" in ast)) return undefined;
 
   for (const child of ast.children) {

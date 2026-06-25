@@ -65,8 +65,7 @@ export function compileEvents(
     try {
       call = parseHandlerExpression(binding.expression);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
       diagnostics.push({
         message,
         severity: "error",
@@ -163,11 +162,10 @@ function validateArguments(args: HandlerArgument[]): { error?: string } {
   return {};
 }
 
-function generateHtml(
-  template: string,
-  bindings: ProcessedBinding[],
-): string {
-  const sorted = [...bindings].sort((a, b) => b.binding.start - a.binding.start);
+function generateHtml(template: string, bindings: ProcessedBinding[]): string {
+  const sorted = [...bindings].sort(
+    (a, b) => b.binding.start - a.binding.start,
+  );
   let html = template;
 
   for (const { binding, handlerName, args } of sorted) {
@@ -179,7 +177,10 @@ function generateHtml(
         : ` data-flow-args=${escapeHtmlAttribute(JSON.stringify(serializedArgs))}`;
     const replacement = ` ${dataEventName}=${escapeHtmlAttribute(handlerName)}${argsAttribute}`;
 
-    html = html.slice(0, binding.attributeStart) + replacement + html.slice(binding.attributeEnd);
+    html =
+      html.slice(0, binding.attributeStart) +
+      replacement +
+      html.slice(binding.attributeEnd);
   }
 
   return html;
@@ -226,8 +227,4 @@ function generateClientFunction(func: FrontmatterFunction): string {
 }
 
 export { findEventBindings, extractFrontmatterFunctions };
-export type {
-  EventBinding,
-  FrontmatterFunction,
-  HandlerArgument,
-};
+export type { EventBinding, FrontmatterFunction, HandlerArgument };

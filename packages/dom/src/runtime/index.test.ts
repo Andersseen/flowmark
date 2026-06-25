@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindFlowEvents } from "./index";
+import { bindFlowEvents } from "./index.js";
 
 function setDocument(html: string): void {
   document.body.innerHTML = html;

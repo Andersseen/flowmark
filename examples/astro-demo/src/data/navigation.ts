@@ -4,6 +4,6 @@
  */
 export const navItems = [
   { id: "home", label: "Home", href: "/" },
-  // { id: "examples", label: "Examples", href: "/inline" },
-  // { id: "security", label: "Security", href: "/security" },
+  { id: "control-flow", label: "Control flow", href: "/control-flow" },
+  { id: "events", label: "Events", href: "/events" },
 ];

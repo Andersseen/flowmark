@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Plugin } from "vite";
-import flowmarkEvents from "./index";
+import flowmarkEvents from "./index.js";
 
 type ConfigSetupHook = (options: {
   updateConfig(config: { vite?: { plugins?: Plugin[] } }): void;
@@ -62,9 +62,9 @@ function save() {
 <button (click)="save()">Save</button>`);
 
     expect(result).toContain('data-flow-on-click="save"');
-    expect(result).toContain('import { bindFlowEvents }');
-    expect(result).toContain('function save()');
-    expect(result).toContain('bindFlowEvents({');
+    expect(result).toContain("import { bindFlowEvents }");
+    expect(result).toContain("function save()");
+    expect(result).toContain("bindFlowEvents({");
   });
 
   it("inlines the client module in a script tag", async () => {
@@ -75,11 +75,20 @@ function save() {
 ---
 <button (click)="save()">Save</button>`);
 
-    expect(transformed?.code).toContain('<script type="module">');
-    expect(transformed?.code).toContain('import { bindFlowEvents }');
-    expect(transformed?.code).toContain('function save()');
-    expect(transformed?.code).toContain('bindFlowEvents({');
+    expect(transformed?.code).toContain("<script>");
+    expect(transformed?.code).toContain("import { bindFlowEvents }");
+    expect(transformed?.code).toContain("function save()");
+    expect(transformed?.code).toContain("bindFlowEvents({");
     expect(transformed?.code).toContain("</script>");
+  });
+
+  it("separates injected scripts from frontmatter", async () => {
+    const transformed = await transformAstro(`---
+function save() {}
+---
+<button (click)="save()">Save</button>`);
+
+    expect(transformed).toContain("---\n<script>");
   });
 
   it("preserves existing frontmatter", async () => {
@@ -92,7 +101,7 @@ function save() {
 ---
 <button (click)="save()">Save {title}</button>`);
 
-    expect(result).toContain("const title = \"Hello\";");
+    expect(result).toContain('const title = "Hello";');
     expect(result).toContain("Save {title}");
   });
 

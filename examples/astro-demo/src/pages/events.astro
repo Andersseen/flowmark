@@ -2,32 +2,89 @@
 import Layout from "../layouts/Layout.astro";
 
 function save(event: Event) {
-  console.log("saved", event.type);
+  const output = document.querySelector("#event-output");
+  const button = event.currentTarget;
+  if (button instanceof HTMLElement) {
+    button.textContent = "Saved";
+  }
+  if (output) {
+    output.textContent = `Saved from a ${event.type} event`;
+  }
 }
 
-function removeItem(id: string) {
-  console.log("remove", id);
+function removeItem(id: string, element: HTMLElement) {
+  const output = document.querySelector("#event-output");
+  if (element instanceof HTMLElement) {
+    element.setAttribute("disabled", "true");
+    element.textContent = "Removed";
+  }
+  if (output) {
+    output.textContent = `Removed ${id} with a serialized argument`;
+  }
 }
 ---
 
-<Layout title="FlowMark DOM Events">
-  <main class="container mx-auto p-8">
-    <h1 class="text-3xl font-bold mb-6">FlowMark DOM Events</h1>
-
-    <section class="space-y-4">
-      <button
-        (click)="save($event)"
-        class="px-4 py-2 bg-blue-600 text-white rounded"
+<Layout
+  title="Flowmark event compiler"
+  description="Flowmark event compiler examples for Astro templates."
+>
+  <main class="page-frame grid gap-10 py-12 md:py-16">
+    <header class="grid max-w-3xl gap-4">
+      <p
+        class="text-sm font-bold uppercase tracking-normal text-muted-foreground"
       >
-        Save
-      </button>
+        Event compiler
+      </p>
+      <h1 class="text-4xl font-black tracking-normal md:text-5xl">
+        Angular-style events, outside the Flowmark template syntax.
+      </h1>
+      <p class="text-lg text-muted-foreground">
+        Handlers live in Astro frontmatter and are moved into a small client
+        module when the template uses event attributes.
+      </p>
+    </header>
 
-      <button
-        (click)="removeItem('item-1')"
-        class="px-4 py-2 bg-red-600 text-white rounded"
-      >
-        Remove item 1
-      </button>
+    <section class="grid gap-6 md:grid-cols-[0.9fr_1.1fr]">
+      <div class="preview-surface">
+        <div class="grid gap-4">
+          <button
+            (click)="save($event)"
+            class="inline-flex w-fit items-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+          >
+            Save
+          </button>
+
+          <button
+            (click)="removeItem('item-1', $el)"
+            class="inline-flex w-fit items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-bold text-foreground disabled:opacity-60"
+          >
+            Remove item 1
+          </button>
+
+          <p
+            id="event-output"
+            class="rounded-md border border-border bg-background p-4 text-sm text-muted-foreground"
+          >
+            Click an action to see the compiled event handlers run.
+          </p>
+        </div>
+      </div>
+
+      <pre
+        class="preview-surface overflow-auto text-sm"><code>{`---
+function save(event) {
+  const output = document.querySelector("#event-output");
+  output.textContent = \`Saved from a \${event.type} event\`;
+}
+
+function removeItem(id, element) {
+  element.setAttribute("disabled", "true");
+  output.textContent = \`Removed \${id}\`;
+}
+---
+
+<button (click)="save($event)">Save</button>
+<button (click)="removeItem('item-1', $el)">Remove</button>`}</code></pre>
     </section>
   </main>
 </Layout>

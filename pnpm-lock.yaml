@@ -20,6 +20,9 @@ importers:
 
   examples/astro-demo:
     dependencies:
+      '@andersseen/icon':
+        specifier: ^0.0.3
+        version: 0.0.3
       '@andersseen/layout':
         specifier: ^0.0.1
         version: 0.0.1

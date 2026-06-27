@@ -1,0 +1,8 @@
+<button
+  data-flow-on-click="save"
+  data-flow-args='[{"__flow":"$event"}]'
+>
+  Save
+</button>
+
+bindFlowEvents({ save, removeItem });

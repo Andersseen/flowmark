@@ -2,28 +2,33 @@
 import Layout from "../layouts/Layout.astro";
 
 import { site } from "../data";
+import controlFlowExample from "../snippets/home-control-flow.flow.txt?raw";
+import eventsExample from "../snippets/home-events.astro.txt?raw";
 ---
 
 <Layout title={site.title} description={site.description} siteUrl={site.url}>
-  <section class="border-b border-border bg-card">
+  <section
+    class="grid min-h-[calc(100vh-76px)] items-center border-b border-border bg-card py-14 md:py-20"
+  >
     <div
-      class="page-frame grid gap-8 py-16 md:grid-cols-[1.05fr_0.95fr] md:items-center md:py-24"
+      class="page-frame grid gap-10 md:grid-cols-[0.95fr_1.05fr] md:items-center"
     >
-      <div class="grid gap-6">
+      <div class="grid gap-7">
         <p
-          class="text-sm font-bold uppercase tracking-normal text-muted-foreground"
+          class="w-fit rounded-md border border-border bg-background px-3 py-1 text-sm font-bold uppercase tracking-normal text-muted-foreground"
         >
-          Flowmark demo
+          Compiler playground
         </p>
         <div class="grid gap-4">
           <h1
-            class="text-4xl font-black tracking-normal text-foreground md:text-6xl"
+            class="max-w-3xl text-4xl font-black tracking-normal text-foreground md:text-6xl"
           >
-            Flowmark
+            Angular-style template DX, without Angular.
           </h1>
           <p class="max-w-2xl text-lg text-muted-foreground md:text-xl">
-            A small compiler playground for HTML control flow and separate
-            Angular-style DOM event bindings.
+            Flowmark explores two focused compilers for Astro and server-first
+            HTML: one for declarative control flow, and one for native browser
+            events written as familiar template attributes.
           </p>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -40,26 +45,158 @@ import { site } from "../data";
             Event compiler
           </a>
         </div>
+        <dl class="grid gap-3 sm:grid-cols-3">
+          <div class="rounded-md border border-border bg-background p-4">
+            <dt class="text-xs font-bold uppercase text-muted-foreground">
+              Output
+            </dt>
+            <dd class="mt-1 text-sm font-extrabold text-foreground">
+              plain JS
+            </dd>
+          </div>
+          <div class="rounded-md border border-border bg-background p-4">
+            <dt class="text-xs font-bold uppercase text-muted-foreground">
+              Runtime
+            </dt>
+            <dd class="mt-1 text-sm font-extrabold text-foreground">
+              tiny helpers
+            </dd>
+          </div>
+          <div class="rounded-md border border-border bg-background p-4">
+            <dt class="text-xs font-bold uppercase text-muted-foreground">
+              Host
+            </dt>
+            <dd class="mt-1 text-sm font-extrabold text-foreground">
+              Astro first
+            </dd>
+          </div>
+        </dl>
       </div>
 
-      <div class="preview-surface flow-preview">
-        <main>
-          <h2>Two compilers, one Astro demo</h2>
-          <article>
-            <span class="tag available">HTML</span>
-            <h3>@if, @for, @switch and interpolation</h3>
-            <p>Flowmark turns template control flow into render functions.</p>
-          </article>
-          <article>
-            <span class="tag sale">Events</span>
-            <h3>(click), $event, $el and literal args</h3>
-            <p>
-              The event compiler extracts client-safe handlers from Astro
-              frontmatter.
-            </p>
-          </article>
-        </main>
+      <div
+        class="preview-surface grid min-h-0 content-start gap-5 md:min-h-[540px]"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span
+            class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--success)_/_0.13)] px-3 py-1 text-xs font-bold text-[hsl(var(--success))]"
+          >
+            HTML compiler
+          </span>
+          <span
+            class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--warning)_/_0.16)] px-3 py-1 text-xs font-bold text-[hsl(32_95%_34%)]"
+          >
+            Events compiler
+          </span>
+        </div>
+
+        <section
+          class="grid gap-3 rounded-md border border-border bg-background p-5"
+          aria-label="Control flow compiler preview"
+        >
+          <h2 class="text-base font-extrabold tracking-normal">
+            Control flow becomes render output
+          </h2>
+          <vertex-editor-lite
+            value={controlFlowExample}
+            language="html"
+            theme="dark"
+            height="170px"
+            font-size="13"
+            class="overflow-hidden rounded-md border border-border"
+          ></vertex-editor-lite>
+        </section>
+
+        <section
+          class="grid gap-3 rounded-md border border-border bg-background p-5"
+          aria-label="Events compiler preview"
+        >
+          <h2 class="text-base font-extrabold tracking-normal">
+            Events become native listeners
+          </h2>
+          <vertex-editor-lite
+            value={eventsExample}
+            language="html"
+            theme="dark"
+            height="210px"
+            font-size="13"
+            class="overflow-hidden rounded-md border border-border"
+          ></vertex-editor-lite>
+        </section>
+
+        <ol
+          class="grid list-none gap-2 p-0"
+          aria-label="Flowmark compilation steps"
+        >
+          <li
+            class="border-l-4 border-primary py-1 pl-3 font-bold text-muted-foreground"
+          >
+            Author with familiar syntax
+          </li>
+          <li
+            class="border-l-4 border-primary py-1 pl-3 font-bold text-muted-foreground"
+          >
+            Compile during Astro build
+          </li>
+          <li
+            class="border-l-4 border-primary py-1 pl-3 font-bold text-muted-foreground"
+          >
+            Ship plain HTML and JavaScript
+          </li>
+        </ol>
       </div>
+    </div>
+  </section>
+
+  <section class="border-b border-border">
+    <div class="page-frame grid gap-5 py-10 md:grid-cols-3">
+      <article
+        class="grid min-h-44 content-start gap-3 rounded-md border border-border bg-background p-5"
+      >
+        <span
+          class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--success)_/_0.13)] px-3 py-1 text-xs font-bold text-[hsl(var(--success))]"
+        >
+          1
+        </span>
+        <h2 class="text-base font-extrabold tracking-normal">
+          Write less ceremony
+        </h2>
+        <p class="text-muted-foreground">
+          Keep template logic near the markup: `@if` for branches and `(click)`
+          for user intent.
+        </p>
+      </article>
+      <article
+        class="grid min-h-44 content-start gap-3 rounded-md border border-border bg-background p-5"
+      >
+        <span
+          class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--warning)_/_0.16)] px-3 py-1 text-xs font-bold text-[hsl(32_95%_34%)]"
+        >
+          2
+        </span>
+        <h2 class="text-base font-extrabold tracking-normal">
+          Compile before runtime
+        </h2>
+        <p class="text-muted-foreground">
+          Flowmark works as build tooling, so pages receive generated functions
+          and small runtime helpers.
+        </p>
+      </article>
+      <article
+        class="grid min-h-44 content-start gap-3 rounded-md border border-border bg-background p-5"
+      >
+        <span
+          class="inline-flex w-fit items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-bold text-secondary-foreground"
+        >
+          3
+        </span>
+        <h2 class="text-base font-extrabold tracking-normal">
+          Stay framework-light
+        </h2>
+        <p class="text-muted-foreground">
+          No components, router, signals, or hydration model are required for
+          the compiler experiments.
+        </p>
+      </article>
     </div>
   </section>
 </Layout>

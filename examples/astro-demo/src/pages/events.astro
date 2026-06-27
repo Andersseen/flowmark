@@ -1,35 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
-
-const authoringFrontmatterExample =
-  `---
-fun` +
-  `ction save(event: Event) {
-  const output = document.querySelector("#event-output");
-  output.textContent = \`Saved from a \${event.type} event\`;
-}
-
-fun` +
-  `ction removeItem(id: string, element: HTMLElement) {
-  element.setAttribute("disabled", "true");
-}
----
-`;
-
-const compiledExample = `<button
-  data-flow-on-click="save"
-  data-flow-args='[{"__flow":"$event"}]'
->
-  Save
-</button>
-
-bindFlowEvents({ save, removeItem });`;
-
-const clickSaveAttribute = `(click)="save($event)"`;
-const clickRemoveAttribute = `(click)="removeItem('item-1', $el)"`;
-const authoringMarkupExample =
-  `<button ${clickSaveAttribute}>Save</button>\n` +
-  `<button ${clickRemoveAttribute}>\n  Remove\n</button>`;
+import authoringExample from "../snippets/events-author.astro.txt?raw";
+import compiledExample from "../snippets/events-compiled.html.txt?raw";
 
 function save(event: Event) {
   const output = document.querySelector("#event-output");
@@ -66,34 +38,43 @@ function previewInput(event: Event) {
   title="Flowmark Events compiler"
   description="Angular-style event binding syntax compiled for Astro pages."
 >
-  <main class="events-page">
-    <header class="page-frame events-hero">
+  <main class="grid gap-8 py-12 md:py-14">
+    <header class="page-frame grid gap-5">
       <p
         class="w-fit rounded-md border border-border bg-background px-3 py-1 text-sm font-bold uppercase tracking-normal text-muted-foreground"
       >
         Flowmark Events
       </p>
-      <h1 class="text-4xl font-black tracking-normal md:text-6xl">
+      <h1
+        class="max-w-4xl text-4xl font-black tracking-normal text-foreground md:text-6xl"
+      >
         Use (click) in Astro. Skip the listener boilerplate.
       </h1>
       <p class="max-w-3xl text-lg text-muted-foreground md:text-xl">
         The events compiler brings Angular's event-binding DX to plain Astro
         markup. Write handlers in frontmatter, use
-        <code>(event)="handler()"</code> in the template, and Flowmark emits the tiny
-        client module that binds native browser listeners.
+        <code
+          class="rounded-md border border-border bg-muted/45 px-1 py-0.5 text-[0.9em] text-foreground"
+          >(event)="handler()"</code
+        > in the template, and Flowmark emits the tiny client module that binds native
+        browser listeners.
       </p>
     </header>
 
-    <section class="page-frame events-showcase">
-      <div class="preview-surface event-demo-panel">
-        <div class="event-demo-toolbar">
-          <span class="tag sale">Live Astro page</span>
-          <span class="event-demo-status"
-            >Compiled from (click) and (input)</span
+    <section class="page-frame grid gap-6 md:grid-cols-[0.8fr_1.2fr]">
+      <div class="preview-surface grid min-h-0 content-start gap-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span
+            class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--warning)_/_0.16)] px-3 py-1 text-xs font-bold text-[hsl(32_95%_34%)]"
           >
+            Live Astro page
+          </span>
+          <span class="text-sm font-bold text-muted-foreground">
+            Compiled from (click) and (input)
+          </span>
         </div>
 
-        <div class="event-actions">
+        <div class="flex flex-wrap gap-3">
           <button
             (click)="save($event)"
             class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
@@ -109,71 +90,135 @@ function previewInput(event: Event) {
           </button>
         </div>
 
-        <label class="event-input-label" for="event-demo-input">
+        <label
+          class="grid gap-2 text-sm font-extrabold text-foreground"
+          for="event-demo-input"
+        >
           <span>Try an input event</span>
           <input
             id="event-demo-input"
             (input)="previewInput($event)"
             placeholder="Type to trigger (input)"
-            class="event-input"
+            class="w-full rounded-md border border-border bg-background px-4 py-3 font-semibold text-foreground placeholder:text-muted-foreground"
           />
         </label>
 
-        <p id="event-output" class="event-output">
+        <p
+          id="event-output"
+          class="min-h-14 rounded-md border border-border bg-background p-4 text-sm font-bold text-muted-foreground"
+        >
           Click an action to see the compiled event handlers run.
         </p>
 
-        <div class="event-supported">
-          <span>$event</span>
-          <span>$el</span>
-          <span>literal args</span>
-          <span>native events</span>
+        <div class="flex flex-wrap gap-2">
+          <span
+            class="rounded-full border border-border bg-muted/45 px-3 py-1.5 text-xs font-extrabold text-muted-foreground"
+            >$event</span
+          >
+          <span
+            class="rounded-full border border-border bg-muted/45 px-3 py-1.5 text-xs font-extrabold text-muted-foreground"
+            >$el</span
+          >
+          <span
+            class="rounded-full border border-border bg-muted/45 px-3 py-1.5 text-xs font-extrabold text-muted-foreground"
+            >literal args</span
+          >
+          <span
+            class="rounded-full border border-border bg-muted/45 px-3 py-1.5 text-xs font-extrabold text-muted-foreground"
+            >native events</span
+          >
         </div>
       </div>
 
-      <div class="preview-surface event-code-panel">
-        <div class="code-block">
-          <div class="code-block-header">
-            <span>Author in Astro</span>
-            <code>.astro</code>
+      <div class="preview-surface grid min-h-0 gap-4">
+        <div
+          class="grid gap-3 rounded-md border border-border bg-background p-5"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-sm font-extrabold text-foreground">
+              Author in Astro
+            </span>
+            <code class="text-xs text-muted-foreground">.astro</code>
           </div>
-          <pre><code>{authoringFrontmatterExample}{authoringMarkupExample}</code></pre>
+          <vertex-editor-lite
+            value={authoringExample}
+            language="html"
+            theme="dark"
+            height="420px"
+            font-size="14"
+            class="overflow-hidden rounded-md border border-border"
+          ></vertex-editor-lite>
         </div>
 
-        <div class="code-block">
-          <div class="code-block-header">
-            <span>Compiler output</span>
-            <code>HTML + JS</code>
+        <div
+          class="grid gap-3 rounded-md border border-border bg-background p-5"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-sm font-extrabold text-foreground">
+              Compiler output
+            </span>
+            <code class="text-xs text-muted-foreground">HTML + JS</code>
           </div>
-          <pre><code>{compiledExample}</code></pre>
+          <vertex-editor-lite
+            value={compiledExample}
+            language="html"
+            theme="dark"
+            height="270px"
+            font-size="14"
+            class="overflow-hidden rounded-md border border-border"
+          ></vertex-editor-lite>
         </div>
       </div>
     </section>
 
     <section
-      class="page-frame events-pipeline"
+      class="page-frame grid gap-4 md:grid-cols-3"
       aria-label="Events compiler pipeline"
     >
-      <article>
-        <span class="tag sale">01</span>
-        <h2>Write event intent in markup</h2>
-        <p>
+      <article
+        class="grid min-h-44 content-start gap-3 rounded-md border border-border bg-background p-5"
+      >
+        <span
+          class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--warning)_/_0.16)] px-3 py-1 text-xs font-bold text-[hsl(32_95%_34%)]"
+        >
+          01
+        </span>
+        <h2 class="text-base font-extrabold tracking-normal">
+          Write event intent in markup
+        </h2>
+        <p class="text-muted-foreground">
           Use `(click)`, `(input)`, or any native event name where the user
           action happens.
         </p>
       </article>
-      <article>
-        <span class="tag available">02</span>
-        <h2>Move safe handlers to the client</h2>
-        <p>
+      <article
+        class="grid min-h-44 content-start gap-3 rounded-md border border-border bg-background p-5"
+      >
+        <span
+          class="inline-flex w-fit items-center rounded-full border border-border bg-[hsl(var(--success)_/_0.13)] px-3 py-1 text-xs font-bold text-[hsl(var(--success))]"
+        >
+          02
+        </span>
+        <h2 class="text-base font-extrabold tracking-normal">
+          Move safe handlers to the client
+        </h2>
+        <p class="text-muted-foreground">
           Flowmark reads Astro frontmatter, extracts the referenced functions,
           and rejects handlers that capture server-only values.
         </p>
       </article>
-      <article>
-        <span class="tag">03</span>
-        <h2>Bind native listeners at runtime</h2>
-        <p>
+      <article
+        class="grid min-h-44 content-start gap-3 rounded-md border border-border bg-background p-5"
+      >
+        <span
+          class="inline-flex w-fit items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-bold text-secondary-foreground"
+        >
+          03
+        </span>
+        <h2 class="text-base font-extrabold tracking-normal">
+          Bind native listeners at runtime
+        </h2>
+        <p class="text-muted-foreground">
           The browser receives data attributes plus a small runtime that calls
           `addEventListener` for you.
         </p>

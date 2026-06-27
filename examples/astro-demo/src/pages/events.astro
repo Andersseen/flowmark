@@ -1,6 +1,36 @@
 ---
 import Layout from "../layouts/Layout.astro";
 
+const authoringFrontmatterExample =
+  `---
+fun` +
+  `ction save(event: Event) {
+  const output = document.querySelector("#event-output");
+  output.textContent = \`Saved from a \${event.type} event\`;
+}
+
+fun` +
+  `ction removeItem(id: string, element: HTMLElement) {
+  element.setAttribute("disabled", "true");
+}
+---
+`;
+
+const compiledExample = `<button
+  data-flow-on-click="save"
+  data-flow-args='[{"__flow":"$event"}]'
+>
+  Save
+</button>
+
+bindFlowEvents({ save, removeItem });`;
+
+const clickSaveAttribute = `(click)="save($event)"`;
+const clickRemoveAttribute = `(click)="removeItem('item-1', $el)"`;
+const authoringMarkupExample =
+  `<button ${clickSaveAttribute}>Save</button>\n` +
+  `<button ${clickRemoveAttribute}>\n  Remove\n</button>`;
+
 function save(event: Event) {
   const output = document.querySelector("#event-output");
   const button = event.currentTarget;
@@ -22,69 +52,132 @@ function removeItem(id: string, element: HTMLElement) {
     output.textContent = `Removed ${id} with a serialized argument`;
   }
 }
+
+function previewInput(event: Event) {
+  const output = document.querySelector("#event-output");
+  const target = event.target;
+  if (output && target && "value" in target) {
+    output.textContent = `Input event value: ${String(target.value)}`;
+  }
+}
 ---
 
 <Layout
-  title="Flowmark event compiler"
-  description="Flowmark event compiler examples for Astro templates."
+  title="Flowmark Events compiler"
+  description="Angular-style event binding syntax compiled for Astro pages."
 >
-  <main class="page-frame grid gap-10 py-12 md:py-16">
-    <header class="grid max-w-3xl gap-4">
+  <main class="events-page">
+    <header class="page-frame events-hero">
       <p
-        class="text-sm font-bold uppercase tracking-normal text-muted-foreground"
+        class="w-fit rounded-md border border-border bg-background px-3 py-1 text-sm font-bold uppercase tracking-normal text-muted-foreground"
       >
-        Event compiler
+        Flowmark Events
       </p>
-      <h1 class="text-4xl font-black tracking-normal md:text-5xl">
-        Angular-style events, outside the Flowmark template syntax.
+      <h1 class="text-4xl font-black tracking-normal md:text-6xl">
+        Use (click) in Astro. Skip the listener boilerplate.
       </h1>
-      <p class="text-lg text-muted-foreground">
-        Handlers live in Astro frontmatter and are moved into a small client
-        module when the template uses event attributes.
+      <p class="max-w-3xl text-lg text-muted-foreground md:text-xl">
+        The events compiler brings Angular's event-binding DX to plain Astro
+        markup. Write handlers in frontmatter, use
+        <code>(event)="handler()"</code> in the template, and Flowmark emits the tiny
+        client module that binds native browser listeners.
       </p>
     </header>
 
-    <section class="grid gap-6 md:grid-cols-[0.9fr_1.1fr]">
-      <div class="preview-surface">
-        <div class="grid gap-4">
+    <section class="page-frame events-showcase">
+      <div class="preview-surface event-demo-panel">
+        <div class="event-demo-toolbar">
+          <span class="tag sale">Live Astro page</span>
+          <span class="event-demo-status"
+            >Compiled from (click) and (input)</span
+          >
+        </div>
+
+        <div class="event-actions">
           <button
             (click)="save($event)"
-            class="inline-flex w-fit items-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+            class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
           >
             Save
           </button>
 
           <button
             (click)="removeItem('item-1', $el)"
-            class="inline-flex w-fit items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-bold text-foreground disabled:opacity-60"
+            class="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-bold text-foreground disabled:opacity-60"
           >
             Remove item 1
           </button>
+        </div>
 
-          <p
-            id="event-output"
-            class="rounded-md border border-border bg-background p-4 text-sm text-muted-foreground"
-          >
-            Click an action to see the compiled event handlers run.
-          </p>
+        <label class="event-input-label" for="event-demo-input">
+          <span>Try an input event</span>
+          <input
+            id="event-demo-input"
+            (input)="previewInput($event)"
+            placeholder="Type to trigger (input)"
+            class="event-input"
+          />
+        </label>
+
+        <p id="event-output" class="event-output">
+          Click an action to see the compiled event handlers run.
+        </p>
+
+        <div class="event-supported">
+          <span>$event</span>
+          <span>$el</span>
+          <span>literal args</span>
+          <span>native events</span>
         </div>
       </div>
 
-      <pre
-        class="preview-surface overflow-auto text-sm"><code>{`---
-function save(event) {
-  const output = document.querySelector("#event-output");
-  output.textContent = \`Saved from a \${event.type} event\`;
-}
+      <div class="preview-surface event-code-panel">
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Author in Astro</span>
+            <code>.astro</code>
+          </div>
+          <pre><code>{authoringFrontmatterExample}{authoringMarkupExample}</code></pre>
+        </div>
 
-function removeItem(id, element) {
-  element.setAttribute("disabled", "true");
-  output.textContent = \`Removed \${id}\`;
-}
----
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Compiler output</span>
+            <code>HTML + JS</code>
+          </div>
+          <pre><code>{compiledExample}</code></pre>
+        </div>
+      </div>
+    </section>
 
-<button (click)="save($event)">Save</button>
-<button (click)="removeItem('item-1', $el)">Remove</button>`}</code></pre>
+    <section
+      class="page-frame events-pipeline"
+      aria-label="Events compiler pipeline"
+    >
+      <article>
+        <span class="tag sale">01</span>
+        <h2>Write event intent in markup</h2>
+        <p>
+          Use `(click)`, `(input)`, or any native event name where the user
+          action happens.
+        </p>
+      </article>
+      <article>
+        <span class="tag available">02</span>
+        <h2>Move safe handlers to the client</h2>
+        <p>
+          Flowmark reads Astro frontmatter, extracts the referenced functions,
+          and rejects handlers that capture server-only values.
+        </p>
+      </article>
+      <article>
+        <span class="tag">03</span>
+        <h2>Bind native listeners at runtime</h2>
+        <p>
+          The browser receives data attributes plus a small runtime that calls
+          `addEventListener` for you.
+        </p>
+      </article>
     </section>
   </main>
 </Layout>

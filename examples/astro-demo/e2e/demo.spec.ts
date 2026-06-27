@@ -4,7 +4,10 @@ test("renders the Flowmark landing page", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: "Flowmark", level: 1 }),
+    page.getByRole("heading", {
+      name: "Angular-style template DX, without Angular.",
+      level: 1,
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Control flow compiler" }),
